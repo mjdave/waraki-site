@@ -176,7 +176,7 @@ updateCleanup = function()
             {
                 fullPath = songsCachePath + localPath
                 print("removing file:", fullPath)
-                file.remove(fullPath)
+                #file.remove(fullPath)
             }
             table.remove(filesToRemove, removeCount - 1)
         }
@@ -243,13 +243,15 @@ katipo.update = function(dt) #called every tick
 }
 
 titleView = scene.getView("title")
-subtitleView = scene.getView("subtitle")
+statusSubtitleTextView = scene.getView("subTitle")
 
-statusSubtitleTextView = scene.getView("statusText")
+songTitleView = scene.getView("songTitle")
+songArtistView = scene.getView("songArtist")
+
 playlistContentView = scene.getView("playlistContent")
 playlistScrollView = scene.getView("playlistScrollView")
 
-helpButton = scene.getView("helpButton")
+settingsButton = scene.getView("settingsButton")
 addPlaylistButton = scene.getView("addPlaylistButton")
 
 helpBackButton = scene.getView("helpBackButton")
@@ -266,7 +268,7 @@ editPlaylistContent = scene.getView("editPlaylistContent")
 
 helpMarkupLoaded = false
 
-helpButton.click = function()
+settingsButton.click = function()
 {
     playlistsHeader.hidden = true
     playlistContentView.hidden = true
@@ -449,8 +451,8 @@ playSelectedPlaylist = function()
 audio.playingSongChanged = function(title, artist, duration)
 {
     print("got song changed:", title, " artist:", artist)
-    titleView.text = title
-    subtitleView.text = artist
+    songTitleView.text = title
+    songArtistView.text = artist
 }
 
 

@@ -11,6 +11,8 @@ addSongFileBrowser = false #means nil
 playlistTitleTextEntry = false
 
 
+searchButton = scene.getView("searchButton")
+searchTextEntry = scene.getView("searchTextEntry")
 
 table.insert(fileBrowser.fileItemLayout.subviews, {
     id = "addButton"
@@ -26,6 +28,41 @@ table.insert(fileBrowser.fileItemLayout.subviews, {
 currentPreviewPlayingFileBrowserItemView = false
 currentPreviewPlayingItemView = false
 currentPreviewPlayingSongID = false
+
+
+
+searchTextEntry.onStartedEditing = function()
+{
+    #searchTextEntry.setText(currentURLFullLink)
+}
+
+searchTextEntry.onFinishedEditing = function(textValue, changesMade)
+{
+
+}
+
+searchTextEntry.textEntryChangedContinuousFunction = function(textValue)
+{
+    print("searchText:", textValue)
+}
+
+searchButton.click = function()
+{
+    if(searchTextEntry.hidden)
+    {
+        searchTextEntry.hidden = false
+        searchTextEntry.textEntryClickFunction()
+
+        scene.getView("addSongSubtitleText").hidden = true
+        scene.getView("addSongTitleText").hidden = true
+    }
+    else
+    {
+        searchTextEntry.hidden = true
+        scene.getView("addSongSubtitleText").hidden = false
+        scene.getView("addSongTitleText").hidden = false
+    }
+}
 
 clearAnyCurrentPlayingSelection = function()
 {

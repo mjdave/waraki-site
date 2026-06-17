@@ -9,7 +9,7 @@ viewTypes = { #can be added to at any time
 topStatusBarPadding = 40
 sidePadding = 20
 headerHeight = 100
-footerHeight = 140
+footerHeight = 110
 
 playlistsHeader = {
     id = "playlistsHeader"
@@ -23,10 +23,10 @@ playlistsHeader = {
     alignmentY = "top"
     subviews = {
         {
-            id = "helpButton"
+            id = "settingsButton"
             type = "button"
             buttonType = "imageHueShift"
-            path = "images/help.png"
+            path = "images/settings.png"
             pos = vec3(30,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
@@ -37,10 +37,11 @@ playlistsHeader = {
             text = "Playlists"
             font = "roboto"
             additiveBlend = true
-            fontSize = 24
+            fontSize = 18
+            pos = vec3(0,10, 0)
         }
         {
-            id = "subtitle"
+            id = "subTitle"
             type = "text"
             text = " "
             font = "roboto"
@@ -88,7 +89,7 @@ helpHeader = {
             text = "Help"
             font = "roboto"
             additiveBlend = true
-            fontSize = 24
+            fontSize = 20
         }
     }
 }
@@ -118,7 +119,7 @@ editPlaylistHeader = {
             id = "playlistTitleTextEntry"
             type = "textEntry"
             font = "roboto"
-            fontSize = 20
+            fontSize = 18
             backgroundColor = vec4(0.0,0.4,0.2,0.6)
             onParentSizeChanged = function(parentSize)
             {
@@ -170,12 +171,35 @@ addSongHeader = {
             alignmentX = "left"
         }
         {
+            id = "searchButton"
+            type = "button"
+            buttonType = "imageHueShift"
+            path = "images/search.png"
+            pos = vec3(10,0, 0)
+            size = vec2(40,40)
+            alignmentX = "outerRight"
+            layoutParentID = "addSongBackButton"
+        }
+        {
+            id = "searchTextEntry"
+            type = "textEntry"
+            font = "roboto"
+            fontSize = 18
+            backgroundColor = vec4(0.0,0.2,0.4,0.6)
+            size = vec2(120,40)
+            pos = vec3(10,0, 0)
+            hidden = true
+            alignmentX = "outerRight"
+            layoutParentID = "searchButton"
+        }
+        {
             id = "addSongTitleText"
             type = "text"
             text = "Add Songs"
             font = "roboto"
             additiveBlend = true
-            fontSize = 24
+            fontSize = 18
+            pos = vec3(0,10, 0)
         }
         {
             id = "addSongSubtitleText"
@@ -299,14 +323,26 @@ mainView = {
                     alignmentY = "top"
                 }
                 {
-                    id = "statusText"
+                    id = "songTitle"
+                    type = "text"
+                    text = " "
+                    font = "roboto"
+                    additiveBlend = true
+                    fontSize = 18
+                    alignmentY = "below"
+                    pos = vec3(0, -10, 0)
+                    layoutParentID = "playPauseButton"
+                }
+                {
+                    id = "songArtist"
                     type = "text"
                     text = " "
                     font = "roboto"
                     additiveBlend = true
                     fontSize = 16
                     alignmentY = "below"
-                    layoutParentID = "playPauseButton"
+                    #pos = vec3(0, -5, 0)
+                    layoutParentID = "songTitle"
                 }
             }
         }
@@ -387,7 +423,7 @@ playlistSongItem = {
             alignmentX = "left"
             additiveBlend = true
             pos = vec3(10,0,0)
-            fontSize = 14
+            fontSize = 16
         }
         {
             id = "addButton"

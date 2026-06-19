@@ -26,6 +26,33 @@ currentRequestedSongDownloadInfo = false
 sharedPlaylistsByPlaylistID = false
 directoryTree = false
 
+
+statusMainTopHeader = scene.getView("statusMainTopHeader")
+titleView = scene.getView("title")
+statusSubtitleTextView = scene.getView("statusText")
+statusDownloadProgress = scene.getView("statusDownloadProgress")
+
+songTitleView = scene.getView("songTitle")
+songArtistView = scene.getView("songArtist")
+
+playlistContentView = scene.getView("playlistContent")
+playlistScrollView = scene.getView("playlistScrollView")
+
+settingsButton = scene.getView("settingsButton")
+addPlaylistButton = scene.getView("addPlaylistButton")
+
+helpBackButton = scene.getView("helpBackButton")
+
+playPauseButton = scene.getView("playPauseButton")
+nextButton = scene.getView("nextButton")
+
+playlistsHeader = scene.getView("playlistsHeader")
+helpHeader = scene.getView("helpHeader")
+editPlaylistHeader = scene.getView("editPlaylistHeader")
+
+helpContent = scene.getView("helpContent")
+editPlaylistContent = scene.getView("editPlaylistContent")
+
 playbackURLQueue = {}
 
 getSongCallback = function(result, hostID)
@@ -38,6 +65,7 @@ getSongCallback = function(result, hostID)
         if(result and result.message == "not connected")
         {
             statusSubtitleTextView.text = "Not connected"
+            statusDownloadProgress.hidden = true
             .connected = false
             #addDownload(downloadInfo.songInfo, downloadInfo.playWhenDone) #for now we just give up on this download and keep trying the rest. Restart the app to try again.
         }
@@ -56,6 +84,7 @@ getSongCallback = function(result, hostID)
         file.saveData(thisSongCachePath, result.fileData)
 
         statusSubtitleTextView.text = " "
+        statusDownloadProgress.hidden = true
         
         if(downloadInfo.playWhenDone)
         {
@@ -73,6 +102,15 @@ getSongCallback = function(result, hostID)
     }
 }
 
+progressBarHeight = 1
+
+progressUpdateCallback = function(progress)
+{
+    statusDownloadProgress.progress = progress
+    parentSize = statusMainTopHeader.size
+    statusDownloadProgress.size = vec2((0.01 + 0.99 * statusDownloadProgress.progress) * parentSize.x, progressBarHeight)
+}
+
 checkForNextFileAndDownloadIfNeeded = function()
 {
     downloadInfo = songDownloadArray[0]
@@ -84,14 +122,23 @@ checkForNextFileAndDownloadIfNeeded = function()
     if(file.fileExists(thisSongCachePath))
     {
         statusSubtitleTextView.text = "Syncing..."
+        statusDownloadProgress.hidden = true
         return false
     }
     
     print("downloading song:", songInfo.fileName)
     statusSubtitleTextView.text = "Downloading: " + songInfo.fileName
     .currentRequestedSongDownloadInfo = downloadInfo
+
+    statusDownloadProgress.hidden = false
+    statusDownloadProgress.progress = 0
+    statusDownloadProgress.onParentSizeChanged = function(parentSize)
+    {
+`       return vec2((0.01 + 0.99 * statusDownloadProgress.progress) * parentSize.x, progressBarHeight)
+    }
+
     
-    katipo.get("songs/" + songInfo.songID, getSongCallback)
+    katipo.get("songs/" + songInfo.songID, progressUpdateCallback, getSongCallback)
     return true
 }
 
@@ -116,6 +163,7 @@ updateDownloads = function()
         else
         {
             statusSubtitleTextView.text = "Sync Complete."
+            statusDownloadProgress.hidden = true
             .downloadsComplete = true
         }
     }
@@ -242,29 +290,6 @@ katipo.update = function(dt) #called every tick
     updateCleanup()
 }
 
-titleView = scene.getView("title")
-statusSubtitleTextView = scene.getView("subTitle")
-
-songTitleView = scene.getView("songTitle")
-songArtistView = scene.getView("songArtist")
-
-playlistContentView = scene.getView("playlistContent")
-playlistScrollView = scene.getView("playlistScrollView")
-
-settingsButton = scene.getView("settingsButton")
-addPlaylistButton = scene.getView("addPlaylistButton")
-
-helpBackButton = scene.getView("helpBackButton")
-
-playPauseButton = scene.getView("playPauseButton")
-nextButton = scene.getView("nextButton")
-
-playlistsHeader = scene.getView("playlistsHeader")
-helpHeader = scene.getView("helpHeader")
-editPlaylistHeader = scene.getView("editPlaylistHeader")
-
-helpContent = scene.getView("helpContent")
-editPlaylistContent = scene.getView("editPlaylistContent")
 
 helpMarkupLoaded = false
 

@@ -6,10 +6,41 @@ viewTypes = { #can be added to at any time
     markup = require("app/common/markupView.tui")
 }
 
-topStatusBarPadding = 40
-sidePadding = 20
-headerHeight = 100
-footerHeight = 110
+topStatusBarHeight = 20
+headerHeight = 50
+footerHeight = 100
+
+statusMainTopHeader = {
+    id = "statusMainTopHeader"
+    type = "color"
+    color = vec4(0.0,0.04,0.06,0.5)
+    alignmentX = "left"
+    alignmentY = "top"
+    onParentSizeChanged = function(parentSize)
+    {
+        return vec2(parentSize.x, topStatusBarHeight)
+    }
+    subviews = {
+        {
+            id = "statusText"
+            type = "text"
+            text = "Welcome To Waraki"
+            color = vec4(0.5,1.0,1.0,0.6)
+            font = "roboto"
+            additiveBlend = true
+            fontSize = 14
+        }
+        {
+            id = "statusDownloadProgress"
+            type = "color"
+            color = vec4(0.2,0.8,1.0,1.0)
+            additiveBlend = true
+            alignmentY = "bottom"
+            alignmentX = "left"
+            hidden = true
+        }
+    }
+}
 
 playlistsHeader = {
     id = "playlistsHeader"
@@ -21,13 +52,14 @@ playlistsHeader = {
     }
     alignmentX = "left"
     alignmentY = "top"
+    pos = vec3(0,-topStatusBarHeight,0)
     subviews = {
         {
             id = "settingsButton"
             type = "button"
             buttonType = "imageHueShift"
             path = "images/settings.png"
-            pos = vec3(30,0, 0)
+            pos = vec3(10,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
         }
@@ -38,24 +70,14 @@ playlistsHeader = {
             font = "roboto"
             additiveBlend = true
             fontSize = 18
-            pos = vec3(0,10, 0)
-        }
-        {
-            id = "subTitle"
-            type = "text"
-            text = " "
-            font = "roboto"
-            additiveBlend = true
-            fontSize = 16
-            alignmentY = "below"
-            layoutParentID = "title"
+            #pos = vec3(0,10, 0)
         }
         {
             id = "addPlaylistButton"
             type = "button"
             buttonType = "imageHueShift"
             path = "images/add.png"
-            pos = vec3(-30,0, 0)
+            pos = vec3(-10,0, 0)
             size = vec2(40,40)
             alignmentX = "right"
         }
@@ -73,13 +95,14 @@ helpHeader = {
     }
     alignmentX = "left"
     alignmentY = "top"
+    pos = vec3(0,-topStatusBarHeight,0)
     subviews = {
         {
             id = "helpBackButton"
             type = "button"
             buttonType = "imageHueShift"
             path = "images/back.png"
-            pos = vec3(30,0, 0)
+            pos = vec3(10,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
         }
@@ -105,13 +128,14 @@ editPlaylistHeader = {
     }
     alignmentX = "left"
     alignmentY = "top"
+    pos = vec3(0,-topStatusBarHeight,0)
     subviews = {
         {
             id = "editPlaylistBackButton"
             type = "button"
             buttonType = "imageHueShift"
             path = "images/back.png"
-            pos = vec3(30,0, 0)
+            pos = vec3(10,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
         }
@@ -120,19 +144,20 @@ editPlaylistHeader = {
             type = "textEntry"
             font = "roboto"
             fontSize = 18
-            backgroundColor = vec4(0.0,0.4,0.2,0.6)
+            backgroundColor = vec4(0.05,0.1,0.2,0.8)
             onParentSizeChanged = function(parentSize)
             {
-                return vec2(parentSize.x - 240 - 53 - 10, 40)
+                return vec2(parentSize.x - 50 - 53 - 50 - 10 - 20, 40)
             }
-            pos = vec3(-32,0,0)
+            pos = vec3(60,0,0)
+            alignmentX = "left"
         }
         {
             id = "toggleDownloadButton"
             type = "button"
             buttonType = "imageHueShift"
             path = "images/downloadOn.png"
-            pos = vec3(-30 - 40 - 10, 0, 0)
+            pos = vec3(-10 - 40 - 10, 0, 0)
             size = vec2(53,40)
             alignmentX = "right"
         }
@@ -141,7 +166,7 @@ editPlaylistHeader = {
             type = "button"
             buttonType = "imageHueShift"
             path = "images/add.png"
-            pos = vec3(-30,0, 0)
+            pos = vec3(-10,0, 0)
             size = vec2(40,40)
             alignmentX = "right"
         }
@@ -160,13 +185,14 @@ addSongHeader = {
     }
     alignmentX = "left"
     alignmentY = "top"
+    pos = vec3(0,-topStatusBarHeight,0)
     subviews = {
         {
             id = "addSongBackButton"
             type = "button"
             buttonType = "imageHueShift"
             path = "images/back.png"
-            pos = vec3(30,0, 0)
+            pos = vec3(10,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
         }
@@ -273,6 +299,7 @@ addSongContent = {
 mainView = {
     type = "view"
     subviews = {
+        statusMainTopHeader
         playlistsHeader
         helpHeader
         editPlaylistHeader
@@ -283,9 +310,9 @@ mainView = {
             alignmentY = "top"
             onParentSizeChanged = function(parentSize)
             {
-                return vec2(parentSize.x, parentSize.y - headerHeight - footerHeight)
+                return vec2(parentSize.x, parentSize.y - headerHeight - footerHeight - topStatusBarHeight)
             }
-            pos = vec3(0,1.0 - headerHeight, 0)
+            pos = vec3(0,1.0 - headerHeight - topStatusBarHeight, 0)
             subviews = {
                 playlistContent
                 helpContent
@@ -372,7 +399,7 @@ mainPlaylistsPlaylistItem = {
             font = "roboto"
             alignmentX = "left"
             additiveBlend = true
-            pos = vec3(30,0,0)
+            pos = vec3(10,0,0)
             fontSize = 18
         }
         {

@@ -11,11 +11,16 @@ config = file.load(configPath)
 if(!config)
 {
     configString = "
+# Waraki host configuration file
+# anything after '#' like this entire line is a comment and is ignored. To change a given setting, you change the value after the '='
 # musicDirectoryPath: set this to the directory that contains music files and .m3u playlists. All files can be nested in subdirectories.
 musicDirectoryPath = \"/home/dave/warakiMusic\"
 
 # doCrawlOnLaunch Will crawl anyway if the cache file is not found, but you can turn off the crawl if you know your music library won't change
 doCrawlOnLaunch = true
+
+# recrawlFrequencySeconds Recrawls the library on disk for new music files every x seconds. Set to nil to disable recrawling. The default is to recrawl every 10 minutes
+recrawlFrequencySeconds = 10 * 60
 
 # importM3UPlaylists will attempt to import any .m3u files when crawling. Remember to turn this off again, or it will keep importing more copies
 importM3UPlaylists = false
@@ -33,6 +38,7 @@ musicDirectoryPath = config.musicDirectoryPath
 doCrawlOnLaunch = config.doCrawlOnLaunch
 convertToFlac = config.convertToFlac
 importM3UPlaylists = config.importM3UPlaylists
+recrawlFrequencySeconds = config.recrawlFrequencySeconds
 
 if(!file.fileExists(musicDirectoryPath))
 {
@@ -115,6 +121,7 @@ doCrawl = function()
                 sharedPlaylists[playlistID] = saveData
             }
         }
+        .importM3UPlaylists = false #avoid importing again on re-crawl
     }
     .songServerInfosBySongID = libraryCrawler.songServerInfosBySongID
     .directoryTree = libraryCrawler.directoryTree
@@ -198,11 +205,23 @@ get = function(url, clientData)
     }
 }
 
+timeAccumulator = 0.0
+
 runLoop = function()
 {
     while(true)
     {
-        sleep(1.0) #nothing to do yet
+        sleep(1.0)
+
+        if(recrawlFrequencySeconds)
+        {
+            timeAccumulator += 1.0
+            if(timeAccumulator > recrawlFrequencySeconds)
+            {
+                .timeAccumulator = 0.0
+                doCrawl()
+            }
+        }
     }
 }
 
@@ -217,7 +236,7 @@ init = function() #called just after katipo.init. The database is now ready to u
         .sharedPlaylists = {}
     }
 
-    print("loaded directory tree:", directoryTree)
+    #print("loaded directory tree:", directoryTree)
 
     if(doCrawlOnLaunch or !directoryTree)
     {

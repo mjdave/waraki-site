@@ -36,15 +36,15 @@ searchTextEntry.onStartedEditing = function()
     #searchTextEntry.setText(currentURLFullLink)
 }
 
-searchTextEntry.onFinishedEditing = function(textValue, changesMade)
+searchTextEntry.setOnFinishedEditing(function(textValue, changesMade)
 {
 
-}
+})
 
-searchTextEntry.textEntryChangedContinuousFunction = function(textValue)
+searchTextEntry.setOnTextChanged(function(textValue)
 {
     print("searchText:", textValue)
-}
+})
 
 searchButton.click = function()
 {
@@ -401,7 +401,7 @@ show = function(directoryTree, playlistOrNil)
             }
         }
 
-        playlistTitleTextEntry.onFinishedEditing = textChangeCallback
+        playlistTitleTextEntry.setOnFinishedEditing(textChangeCallback)
 
         
     }

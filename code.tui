@@ -52,11 +52,6 @@ if(!file.fileExists(clientSitePath))
     error("missing publicData directory:", clientSitePath)
 }
 
-musicLibraryPath = clientSitePath + "/musicLibrary.tuib"
-imagesDirectoryPath = clientSitePath + "/images/"
-clientScriptsDirectoryPath = clientSitePath + "/scripts/"
-clientFontsDirectoryPath = clientSitePath + "/fonts/"
-
 songServerInfosBySongID = {}
 directoryTree = {}
 

@@ -16,6 +16,7 @@ statusMainTopHeader = {
     color = vec4(0.0,0.04,0.06,0.5)
     alignmentX = "left"
     alignmentY = "top"
+    pos = vec3(0,-headerHeight,0)
     onParentSizeChanged = function(parentSize)
     {
         return vec2(parentSize.x, topStatusBarHeight)
@@ -52,7 +53,6 @@ playlistsHeader = {
     }
     alignmentX = "left"
     alignmentY = "top"
-    pos = vec3(0,-topStatusBarHeight,0)
     subviews = {
         {
             id = "settingsButton"
@@ -95,7 +95,6 @@ helpHeader = {
     }
     alignmentX = "left"
     alignmentY = "top"
-    pos = vec3(0,-topStatusBarHeight,0)
     subviews = {
         {
             id = "helpBackButton"
@@ -128,7 +127,6 @@ editPlaylistHeader = {
     }
     alignmentX = "left"
     alignmentY = "top"
-    pos = vec3(0,-topStatusBarHeight,0)
     subviews = {
         {
             id = "editPlaylistBackButton"
@@ -185,7 +183,6 @@ addSongHeader = {
     }
     alignmentX = "left"
     alignmentY = "top"
-    pos = vec3(0,-topStatusBarHeight,0)
     subviews = {
         {
             id = "addSongBackButton"
@@ -357,7 +354,7 @@ mainView = {
                     additiveBlend = true
                     fontSize = 18
                     alignmentY = "below"
-                    pos = vec3(0, -10, 0)
+                    pos = vec3(0, -5, 0)
                     layoutParentID = "playPauseButton"
                 }
                 {
@@ -381,7 +378,7 @@ mainPlaylistsPlaylistItem = {
     type = "view"
     onParentSizeChanged = function(parentSize)
     {
-        return vec2(parentSize.x - 20.0,60)
+        return vec2(parentSize.x - 20.0,50)
     }
 
     subviews = {
@@ -393,24 +390,24 @@ mainPlaylistsPlaylistItem = {
             color = vec4(0.04,0.12,0.15,0.3)
         }
         {
+            id = "dotDotDotButton"
+            type = "button"
+            clip = true
+            buttonType = "imageHueShift"
+            path = "images/dotDotDot.png"
+            pos = vec3(10,0, 0)
+            size = vec2(40,40)
+            alignmentX = "left"
+        }
+        {
             id = "playlistItemTitle"
             type = "text"
             text = "Playlist Title"
             font = "roboto"
             alignmentX = "left"
             additiveBlend = true
-            pos = vec3(10,0,0)
+            pos = vec3(55,0,0)
             fontSize = 18
-        }
-        {
-            id = "dotDotDotButton"
-            type = "button"
-            clip = true
-            buttonType = "imageHueShift"
-            path = "images/dotDotDot.png"
-            pos = vec3(-10,0, 0)
-            size = vec2(40,40)
-            alignmentX = "right"
         }
     }
 }

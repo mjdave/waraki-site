@@ -2,6 +2,7 @@
 # this code is downloaded by the client when they first connect and is run on the client browser. It is the entirety of the waraki client "app"
 # It handles the user interface and all client interactions, as well as requesting music from the host
 
+keys = require("app/common/keys.tui")
 editPlaylistUI = require("scripts/editPlaylistUI.tui")
 
 songsCachePath = file.getSavePath("files/songs/")
@@ -224,7 +225,7 @@ updateCleanup = function()
             {
                 fullPath = songsCachePath + localPath
                 print("removing file:", fullPath)
-                #file.remove(fullPath)
+                file.remove(fullPath)
             }
             table.remove(filesToRemove, removeCount - 1)
         }
@@ -527,17 +528,30 @@ loadPlaylists = function()
 
         viewTable = scene.mainPlaylistsPlaylistItem
 
-        for(i,playlist in sharedPlaylistsOrderedArray)
+        enabledItems = {}
+        disabledItems = {}
+
+        index = 0
+
+        for(playlist in sharedPlaylistsOrderedArray)
         {
             disabledKey = "disabled_" + playlist.playlistID
             playlistDownloadDisabled = database.get(disabledKey)
-            if(!playlistDownloadDisabled)
+            if(playlistDownloadDisabled)
             {
-                addSongsToDownloadQueueForPlaylist(playlist)
+                table.insert(disabledItems, playlist)
             }
             else
             {
-                print("skipping download of disabled playlist:", playlist.name)
+                table.insert(enabledItems, playlist)
+            }
+        }
+
+        addItem = function(playlist, downloadDisabled)
+        {
+            if(!downloadDisabled)
+            {
+                addSongsToDownloadQueueForPlaylist(playlist)
             }
 
             itemView = playlistScrollView.addView(viewTable)
@@ -545,10 +559,15 @@ loadPlaylists = function()
             titleTextView.text = playlist.name
             itemView.playlist = playlist
 
+            if(downloadDisabled)
+            {
+                titleTextView.color = vec4(1.0,1.0,1.0,0.3)
+            }
+
             backgroundView = itemView.getView("playlistItemBackground")
 
             dotDotDotButton = itemView.getView("dotDotDotButton")
-            dotDotDotButton.setHueOffset(-0.1 * i + 0.2)
+            dotDotDotButton.setHueOffset(-0.1 * index + 0.2)
             dotDotDotButton.click = function()
             {
                 playlistsHeader.hidden = true
@@ -559,20 +578,20 @@ loadPlaylists = function()
                 editPlaylistUI.show(directoryTree, playlist)
             }
 
-            playFunc = function()
+            if(!downloadDisabled)
             {
-                .selectedPlaylistView = itemView
-                playSelectedPlaylist()
-                updateVisuals()
+                playFunc = function()
+                {
+                    .selectedPlaylistView = itemView
+                    playSelectedPlaylist()
+                    updateVisuals()
 
+                }
+
+                backgroundView.setClickFunction(playFunc)
             }
 
-            backgroundView.click = function()
-            {
-                playFunc()
-            }
-
-            if(i % 2 == 0)
+            if(index % 2 == 0)
             {
                 backgroundView.color = backgroundView.color * 0.5
             }
@@ -583,7 +602,19 @@ loadPlaylists = function()
 
             #playlistScrollView.insertRow(itemView)
             table.insert(playlistViews, itemView)
+            index++
         }
+
+        for(playlist in enabledItems)
+        {
+            addItem(playlist, false)
+        }
+
+        for(playlist in disabledItems)
+        {
+            addItem(playlist, true)
+        }
+
     }
     else
     {
@@ -641,3 +672,14 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
 
     loadPlaylists()
 }
+
+playPauseKeyFunction = function(isDown, code, mod, isRepeat)
+{
+    if(!isDown)
+    {
+        playPauseButtonClick()
+    }
+}
+
+eventManager.addKeyEventListener(keys.keyCodes.space, playPauseKeyFunction)
+eventManager.addKeyEventListener(keys.keyCodes.audioplay, playPauseKeyFunction)

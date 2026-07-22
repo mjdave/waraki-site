@@ -25,9 +25,6 @@ recrawlFrequencySeconds = 10 * 60
 # importM3UPlaylists will attempt to import any .m3u files when crawling. Remember to turn this off again, or it will keep importing more copies
 importM3UPlaylists = false
 
-# convertToFlac will convert m4a files into flac files on import, save them as a new copy beside, and use them instead
-# you should only use this if you have the ffmpeg tool installed: sudo apt-get install ffmpeg
-convertToFlac = false
 "
     file.saveData(configPath, configString)
     print("saved config:", configPath)
@@ -121,9 +118,44 @@ doCrawl = function()
     .songServerInfosBySongID = libraryCrawler.songServerInfosBySongID
     .directoryTree = libraryCrawler.directoryTree
 
+    #todo this is all hackery for backwards compatibility, can be removed later
+    if(convertToFlac)
+    {
+        for(playlistID, playlist in sharedPlaylists)
+        {
+            for(song in playlist.songs)
+            {
+                if(!songServerInfosBySongID[song.songID])
+                {
+                    print("no song info:", song)
+                    extension = file.extension(song.fileName)
+                    if(extension == ".ogg")
+                    {
+                        #localM4AFilename = file.changeExtension(song.localPath, "m4a")
+                        #fullM4APath = musicDirectoryPath + "/" + localM4AFilename
+                        #print("fullM4APath:", fullM4APath)
+                        fullPath = musicDirectoryPath + "/" + song.localPath
+                        newSongID = string.sha1(fullPath)
+
+                        if(songServerInfosBySongID[newSongID])
+                        {
+                            song.songID = newSongID
+                        }
+                        else
+                        {
+                            print("Song not found:", song.localPath)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     host.setPublicData("directoryTree", directoryTree)
     host.setPublicData("sharedPlaylists", sharedPlaylists)
     host.setPrivateData("songServerInfosBySongID", songServerInfosBySongID)
+
+
 }
 
 

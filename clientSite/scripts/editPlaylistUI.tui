@@ -165,10 +165,12 @@ onBrowserItemCreate = function(itemView, index)
     if(addButtonView) #existance proves this is a file, not a directory we are clicking on
     {
         backgroundView = itemView.getView("fileItemBackground")
-        backgroundView.click = function()
+        backgroundViewClickFunction = function()
         {
             playFileBrowserPreview(itemView)
         }
+
+        backgroundView.setClickFunction(backgroundViewClickFunction)
 
         addButtonView.click = function()
         {

@@ -446,7 +446,7 @@ playlistSongItem = {
             font = "roboto"
             alignmentX = "left"
             additiveBlend = true
-            pos = vec3(10,0,0)
+            pos = vec3(40,0,0)
             fontSize = 16
         }
         {
@@ -455,9 +455,9 @@ playlistSongItem = {
             buttonType = "imageHueShift"
             clip = true
             path = "images/add.png"
-            pos = vec3(-10,0, 0)
+            pos = vec3(5,0, 0)
             size = addAndPlayButtonSize
-            alignmentX = "right"
+            alignmentX = "left"
         }
     }
 }

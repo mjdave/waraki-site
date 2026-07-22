@@ -43,16 +43,21 @@ loadFile = function(path, fileName, localPath)
             extension = file.extension(fileName) 
             skip = false
             pathToUse = path
-            if(convertToFlac and extension == ".m4a")
+            if(convertM4AToMP3 and extension == ".m4a")
             {
                 #print("found m4a:", path)
                 oggFilename = file.changeExtension(path, "ogg")
                 flacFilename = file.changeExtension(path, "flac")
+                mp3Filename = file.changeExtension(path, "mp3")
                 if(file.fileExists(flacFilename))
                 {
                     file.remove(flacFilename)
                 }
-                if(!file.fileExists(oggFilename))
+                if(file.fileExists(oggFilename))
+                {
+                    file.remove(oggFilename)
+                }
+                if(!file.fileExists(mp3Filename))
                 {
                     hasQuotes = (string.find(path, "'") != nil)
                     fileCopied = false
@@ -74,7 +79,7 @@ loadFile = function(path, fileName, localPath)
                     }
 
 
-                    ffmpegCommand = "ffmpeg -v quiet -i '" + inputFilePath + "' -f ogg '" + outputFilePath + "'" 
+                    ffmpegCommand = "ffmpeg -v quiet -i '" + inputFilePath + "' -vn -f mp3 '" + outputFilePath + "'" 
                     print("running:", ffmpegCommand)
                     system(ffmpegCommand)
 
@@ -90,16 +95,16 @@ loadFile = function(path, fileName, localPath)
                     }
                     else
                     {
-                        print("moving from:", outputFilePath " to:", oggFilename)
-                        file.move(outputFilePath, oggFilename)
+                        print("moving from:", outputFilePath " to:", mp3Filename)
+                        file.move(outputFilePath, mp3Filename)
                     if(file.fileExists(outputFilePath))
                     {
                         error("file still exists")
                     }
-                        pathToUse = oggFilename
-                        extension = ".ogg"
-                        fileName = file.changeExtension(fileName, "ogg")
-                        localPath = file.changeExtension(localPath, "ogg")
+                        pathToUse = mp3Filename
+                        extension = ".mp3"
+                        fileName = file.changeExtension(fileName, "mp3")
+                        localPath = file.changeExtension(localPath, "mp3")
                     }
                 }
                 else
@@ -189,9 +194,9 @@ addm3uPlaylists = function()
                     normalizedSongPath = normalizedSongPath + line
                     #print("final:", normalizedSongPath)
 
-                    if(convertToFlac and file.extension(normalizedSongPath) == ".m4a")
+                    if(convertM4AToMP3 and file.extension(normalizedSongPath) == ".m4a")
                     {
-                        normalizedSongPath = file.changeExtension(normalizedSongPath, "ogg")
+                        normalizedSongPath = file.changeExtension(normalizedSongPath, "mp3")
                     }
 
                     songID = string.sha1(normalizedSongPath)

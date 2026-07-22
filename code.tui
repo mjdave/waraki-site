@@ -33,7 +33,7 @@ importM3UPlaylists = false
 
 musicDirectoryPath = config.musicDirectoryPath
 doCrawlOnLaunch = config.doCrawlOnLaunch
-convertToFlac = config.convertToFlac
+convertM4AToMP3 = config.convertM4AToMP3 #used by dave, not really for public use but you could get it working
 importM3UPlaylists = config.importM3UPlaylists
 recrawlFrequencySeconds = config.recrawlFrequencySeconds
 
@@ -92,7 +92,7 @@ doCrawl = function()
 {
     print("crawling library. This may take some time..")
     libraryCrawler = require(katipo.sitePath + "/libraryCrawler.tui")
-    libraryCrawler.convertToFlac = convertToFlac
+    libraryCrawler.convertM4AToMP3 = convertM4AToMP3
     libraryCrawler.importM3UPlaylists = importM3UPlaylists
     libraryCrawler.runCrawl(musicDirectoryPath)
 
@@ -119,7 +119,7 @@ doCrawl = function()
     .directoryTree = libraryCrawler.directoryTree
 
     #todo this is all hackery for backwards compatibility, can be removed later
-    if(convertToFlac)
+    if(convertM4AToMP3)
     {
         for(playlistID, playlist in sharedPlaylists)
         {
@@ -129,7 +129,7 @@ doCrawl = function()
                 {
                     print("no song info:", song)
                     extension = file.extension(song.fileName)
-                    if(extension == ".ogg")
+                    if(extension == ".mp3")
                     {
                         #localM4AFilename = file.changeExtension(song.localPath, "m4a")
                         #fullM4APath = musicDirectoryPath + "/" + localM4AFilename

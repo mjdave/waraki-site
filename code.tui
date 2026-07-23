@@ -119,37 +119,56 @@ doCrawl = function()
     .directoryTree = libraryCrawler.directoryTree
 
     #todo this is all hackery for backwards compatibility, can be removed later
-    if(convertM4AToMP3)
-    {
-        for(playlistID, playlist in sharedPlaylists)
-        {
-            for(song in playlist.songs)
-            {
-                if(!songServerInfosBySongID[song.songID])
-                {
-                    print("no song info:", song)
-                    extension = file.extension(song.fileName)
-                    if(extension == ".mp3")
-                    {
-                        #localM4AFilename = file.changeExtension(song.localPath, "m4a")
-                        #fullM4APath = musicDirectoryPath + "/" + localM4AFilename
-                        #print("fullM4APath:", fullM4APath)
-                        fullPath = musicDirectoryPath + "/" + song.localPath
-                        newSongID = string.sha1(fullPath)
-
-                        if(songServerInfosBySongID[newSongID])
-                        {
-                            song.songID = newSongID
-                        }
-                        else
-                        {
-                            print("Song not found:", song.localPath)
-                        }
-                    }
-                }
-            }
-        }
-    }
+    #if(convertM4AToMP3)
+    #{
+    #    for(playlistID, playlist in sharedPlaylists)
+    #    {
+    #        for(song in playlist.songs)
+    #        {
+    #            if(!songServerInfosBySongID[song.songID])
+    #            {
+    #                print("no song info:", song)
+    #                extension = file.extension(song.fileName)
+    #                if(extension == ".mp3")
+    #                {
+    #                    #localM4AFilename = file.changeExtension(song.localPath, "m4a")
+    #                    #fullM4APath = musicDirectoryPath + "/" + localM4AFilename
+    #                    #print("fullM4APath:", fullM4APath)
+    #                    fullPath = musicDirectoryPath + "/" + song.localPath
+    #                    newSongID = string.sha1(fullPath)
+#
+    #                    if(songServerInfosBySongID[newSongID])
+    #                    {
+    #                        song.songID = newSongID
+    #                    }
+    #                    else
+    #                    {
+    #                        print("Song not found:", song.localPath)
+    #                    }
+    #                }
+    #                else if(extension == ".ogg")
+    #                {
+    #                    mp3LocalPath = file.changeExtension(song.localPath, "mp3")
+    #                    fullPath = musicDirectoryPath + "/" + mp3LocalPath
+    #                    if(file.fileExists(fullPath))
+    #                    {
+    #                        newSongID = string.sha1(fullPath)
+    #                        if(songServerInfosBySongID[newSongID])
+    #                        {
+    #                            song.songID = newSongID
+    #                            song.localPath = mp3LocalPath
+    #                            song.fileName = file.changeExtension(song.fileName, "mp3")
+    #                        }
+    #                        else
+    #                        {
+    #                            print("Song not found:", song.localPath)
+    #                        }
+    #                    }
+    #                }
+    #            }
+    #        }
+    #    }
+    #}
 
     host.setPublicData("directoryTree", directoryTree)
     host.setPublicData("sharedPlaylists", sharedPlaylists)

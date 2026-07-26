@@ -4,6 +4,7 @@
 
 keys = require("app/common/keys.tui")
 editPlaylistUI = require("scripts/editPlaylistUI.tui")
+settingsUI = require("scripts/settingsUI.tui")
 
 songsCachePath = file.getSavePath("files/songs/")
 
@@ -42,17 +43,20 @@ playlistScrollView = scene.getView("playlistScrollView")
 settingsButton = scene.getView("settingsButton")
 addPlaylistButton = scene.getView("addPlaylistButton")
 
-helpBackButton = scene.getView("helpBackButton")
 
 playPauseButton = scene.getView("playPauseButton")
 nextButton = scene.getView("nextButton")
 
-playlistsHeader = scene.getView("playlistsHeader")
-helpHeader = scene.getView("helpHeader")
-editPlaylistHeader = scene.getView("editPlaylistHeader")
+pitchUpButton = scene.getView("pitchUpButton")
+pitchDownButton = scene.getView("pitchDownButton")
+pitchLevelText = scene.getView("pitchLevel")
 
-helpContent = scene.getView("helpContent")
+playlistsHeader = scene.getView("playlistsHeader")
+editPlaylistHeader = scene.getView("editPlaylistHeader")
 editPlaylistContent = scene.getView("editPlaylistContent")
+
+playbackTimelineProgressView = scene.getView("playbackTimelineProgress")
+playbackTimelineView = scene.getView("playbackTimeline")
 
 playbackURLQueue = {}
 
@@ -282,6 +286,7 @@ addDownload = function(songInfo, playWhenDone)
 
 }
 
+secondTimer = 0.0
 katipo.update = function(dt) #called every tick
 {
     if(connected)
@@ -289,26 +294,80 @@ katipo.update = function(dt) #called every tick
         updateDownloads()
     }
     updateCleanup()
+
+    if(!paused)
+    {
+        playbackTimelineProgressView.hidden = false
+
+        currentTrackTime = audio.currentTrackTime()
+        currentTrackDuration = audio.currentTrackDuration()
+
+        moveWidth = playbackTimelineView.size.x - playbackTimelineView.size.y
+
+        xOffset = (currentTrackTime / currentTrackDuration) * moveWidth
+
+        playbackTimelineProgressView.pos = vec3(2 + xOffset,2,0)
+    }
+                
+    secondTimer += dt
+    if(secondTimer > 1.0)
+    {
+        secondTimer -= 1.0
+        if(!paused)
+        {
+            if(currentTrackDuration > 0)
+            {
+                timeRemaining = math.floor(currentTrackDuration - currentTrackTime)
+
+                timeRemaining1 = timeRemaining % 10
+                timeRemaining10 = math.floor((timeRemaining % 60) / 10)
+                timeRemainingMinutes = math.floor(timeRemaining / 60)
+
+                scene.getView("playbackTimelineStatusText").text = string.format("%d:%d%d",timeRemainingMinutes, timeRemaining10, timeRemaining1)
+
+            }
+            else
+            {
+                scene.getView("playbackTimelineStatusText").text = "0:00"
+            }
+        }
+    }
 }
 
+settingChangedFunction = function(settingKey, value)
+{
+    if(settingKey == "pitchControlsEnabled")
+    {
+        .pitchControlsEnabled = value
+        pitchControls = scene.getView("pitchControls")
 
-helpMarkupLoaded = false
+        if(pitchControlsEnabled)
+        {
+            pitchControls.hidden = false
+        }
+        else
+        {
+            pitchControls.hidden = true
+        }
+    }
+}
+
+settingsBackFunction = function()
+{
+    playlistsHeader.hidden = false
+    playlistContentView.hidden = false
+}
 
 settingsButton.click = function()
 {
     playlistsHeader.hidden = true
     playlistContentView.hidden = true
 
-    helpHeader.hidden = false
-    helpContent.hidden = false
-
-    if(!helpMarkupLoaded)
-    {
-        helpMarkupView = scene.getView("helpMarkup")
-        helpPath = file.getResourcePath("help.tml")
-        helpMarkupData = file.loadData(helpPath)
-        helpMarkupView.setText(helpMarkupData)
+    delegateInfo = {
+        settingsBackFunction = settingsBackFunction
+        settingChangedFunction = settingChangedFunction
     }
+    settingsUI.show(delegateInfo)
 }
 
 editPlaylistBackClick = function()
@@ -352,17 +411,6 @@ addPlaylistButton.click = function()
     editPlaylistUI.show(directoryTree, nil)
 }
 
-helpBackButton.click = function()
-{
-    playlistsHeader.hidden = false
-    playlistContentView.hidden = false
-
-    helpHeader.hidden = true
-    helpContent.hidden = true
-}
-
-
-
 updatePauseButton = function()
 {
     if(paused)
@@ -394,10 +442,40 @@ playPauseButtonClick = function()
 
 playPauseButton.click = playPauseButtonClick
 
-nextButton.click = function()
+noteOffset = 0
+getNotePitch = function(offset)
+{
+    return math.pow(2, (offset / 12))
+}
+
+changePitch = function(offset)
+{
+    noteOffset += offset
+    notePitch = getNotePitch(noteOffset)
+    audio.setPlaybackRate(notePitch)
+    pitchLevelText.text = string.format("%d", noteOffset)
+}
+
+pitchUpButtonClick = function()
+{
+    changePitch(1)
+}
+
+pitchUpButton.click = pitchUpButtonClick
+
+pitchDownButtonClick = function()
+{
+    changePitch(-1)
+}
+
+pitchDownButton.click = pitchDownButtonClick
+
+skipToNextTrack = function()
 {
     audio.next()
 }
+
+nextButton.click = skipToNextTrack
 
 playlistViews = {}
 selectedPlaylistView = false
@@ -670,8 +748,25 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
         #print("sharedPlaylistsByPlaylistID:", sharedPlaylistsByPlaylistID)
     }
 
+    .pitchControlsEnabled = database.get("pitchControlsEnabled")
+
+    if(pitchControlsEnabled)
+    {
+        pitchControls = scene.getView("pitchControls")
+        pitchControls.hidden = false
+    }
+
     loadPlaylists()
 }
+
+playbackTimelineView.click = function(localPoint)
+{
+    fraction = localPoint.x / playbackTimelineView.size.x
+    currentTrackDuration = audio.currentTrackDuration()
+    newTime = currentTrackDuration * fraction
+    audio.seekToTime(newTime)
+}
+
 
 playPauseKeyFunction = function(isDown, code, mod, isRepeat)
 {
@@ -681,5 +776,37 @@ playPauseKeyFunction = function(isDown, code, mod, isRepeat)
     }
 }
 
+skipKeyFunction = function(isDown, code, mod, isRepeat)
+{
+    if(!isDown)
+    {
+        skipToNextTrack()
+    }
+}
+
+pitchUpFunction = function(isDown, code, mod, isRepeat)
+{
+    if(!isDown and pitchControlsEnabled)
+    {
+        changePitch(1)
+    }
+}
+
+pitchDownFunction = function(isDown, code, mod, isRepeat)
+{
+    if(!isDown and pitchControlsEnabled)
+    {
+        changePitch(-1)
+    }
+}
+
 eventManager.addKeyEventListener(keys.keyCodes.space, playPauseKeyFunction)
 eventManager.addKeyEventListener(keys.keyCodes.audioplay, playPauseKeyFunction)
+
+eventManager.addKeyEventListener(keys.keyCodes.right, skipKeyFunction)
+eventManager.addKeyEventListener(keys.keyCodes.audionext, skipKeyFunction)
+
+eventManager.addKeyEventListener(keys.keyCodes.up, pitchUpFunction)
+eventManager.addKeyEventListener(keys.keyCodes.down, pitchDownFunction)
+
+

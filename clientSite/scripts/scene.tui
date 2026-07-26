@@ -6,9 +6,12 @@ viewTypes = { #can be added to at any time
     markup = require("app/common/markupView.tui")
 }
 
+settingsUI = require("scripts/settingsUI.tui")
+
 topStatusBarHeight = 20
 headerHeight = 50
 footerHeight = 100
+playbackTimelineHeight = 20
 
 statusMainTopHeader = {
     id = "statusMainTopHeader"
@@ -38,6 +41,44 @@ statusMainTopHeader = {
             additiveBlend = true
             alignmentY = "bottom"
             alignmentX = "left"
+            hidden = true
+        }
+    }
+}
+
+playbackTimeline = {
+    id = "playbackTimeline"
+    type = "color"
+    color = vec4(0.0,0.04,0.06,0.5)
+    alignmentX = "left"
+    alignmentY = "bottom"
+    pos = vec3(0,footerHeight,0)
+    onParentSizeChanged = function(parentSize)
+    {
+        return vec2(parentSize.x, playbackTimelineHeight)
+    }
+    subviews = {
+        {
+            id = "playbackTimelineStatusText"
+            type = "text"
+            text = "0:00"
+            color = vec4(0.5,1.0,1.0,0.6)
+            alignmentX = "right"
+            font = "roboto"
+            additiveBlend = true
+            fontSize = 14
+            pos = vec3(-5,0,0)
+        }
+        {
+            id = "playbackTimelineProgress"
+            type = "color"
+            #shader = "colorViewHueShift"
+            color = vec4(0.2,0.5,0.6,0.5)
+            additiveBlend = true
+            alignmentY = "bottom"
+            alignmentX = "left"
+            size = vec2(playbackTimelineHeight - 4,playbackTimelineHeight - 4)
+            pos = vec3(2,2,0)
             hidden = true
         }
     }
@@ -80,38 +121,6 @@ playlistsHeader = {
             pos = vec3(-10,0, 0)
             size = vec2(40,40)
             alignmentX = "right"
-        }
-    }
-}
-
-helpHeader = {
-    id = "helpHeader"
-    type = "color"
-    hidden = true
-    color = vec4(0.3,0.2,0.0,0.2)
-    onParentSizeChanged = function(parentSize)
-    {
-        return vec2(parentSize.x, headerHeight)
-    }
-    alignmentX = "left"
-    alignmentY = "top"
-    subviews = {
-        {
-            id = "helpBackButton"
-            type = "button"
-            buttonType = "imageHueShift"
-            path = "images/back.png"
-            pos = vec3(10,0, 0)
-            size = vec2(40,40)
-            alignmentX = "left"
-        }
-        {
-            id = "title"
-            type = "text"
-            text = "Help"
-            font = "roboto"
-            additiveBlend = true
-            fontSize = 20
         }
     }
 }
@@ -255,18 +264,6 @@ playlistContent = {
     }
 }
 
-helpContent = {
-    id = "helpContent"
-    hidden = true
-    type = "view"
-    subviews = {
-        {
-            id = "helpMarkup"
-            type = "markup"
-        }
-    }
-}
-
 editPlaylistContent = {
     id = "editPlaylistContent"
     hidden = true
@@ -298,7 +295,8 @@ mainView = {
     subviews = {
         statusMainTopHeader
         playlistsHeader
-        helpHeader
+        settingsUI.header
+        settingsUI.helpHeader
         editPlaylistHeader
         addSongHeader
         {
@@ -307,16 +305,18 @@ mainView = {
             alignmentY = "top"
             onParentSizeChanged = function(parentSize)
             {
-                return vec2(parentSize.x, parentSize.y - headerHeight - footerHeight - topStatusBarHeight)
+                return vec2(parentSize.x, parentSize.y - headerHeight - footerHeight - topStatusBarHeight - playbackTimelineHeight)
             }
             pos = vec3(0,1.0 - headerHeight - topStatusBarHeight, 0)
             subviews = {
                 playlistContent
-                helpContent
+                settingsUI.content
+                settingsUI.helpContent
                 editPlaylistContent
                 addSongContent
             }
         }
+        playbackTimeline
         {
             id = "footer"
             type = "color"
@@ -328,6 +328,47 @@ mainView = {
             alignmentX = "left"
             alignmentY = "bottom"
             subviews = {
+                {
+                    id = "pitchControls"
+                    type = "view"
+                    hidden = true
+                    subviews = {
+                        {
+                            id = "pitchDownButton"
+                            type = "button"
+                            buttonType = "imageHueShift"
+                            path = "images/remove.png"
+                            pos = vec3(10, -10, 0)
+                            size = vec2(40,40)
+                            alignmentY = "top"
+                            alignmentX = "left"
+                        }
+                        {
+                            id = "pitchUpButton"
+                            type = "button"
+                            buttonType = "imageHueShift"
+                            path = "images/add.png"
+                            pos = vec3(55, -10, 0)
+                            size = vec2(40,40)
+                            alignmentY = "top"
+                            alignmentX = "left"
+                        }
+                        {
+                            id = "pitchLevel"
+                            type = "text"
+                            text = "0"
+                            font = "roboto"
+                            additiveBlend = true
+                            fontSize = 18
+                            alignmentY = "top"
+                            alignmentX = "left"
+                            pos = vec3(100, -20, 0)
+                        }
+                    }
+                }
+
+                
+
                 {
                     id = "playPauseButton"
                     type = "button"

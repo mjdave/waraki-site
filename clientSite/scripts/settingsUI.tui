@@ -1,0 +1,250 @@
+
+headerHeight = 50
+
+header = {
+    id = "settingsHeader"
+    type = "color"
+    hidden = true
+    color = vec4(0.3,0.2,0.0,0.2)
+    onParentSizeChanged = function(parentSize)
+    {
+        return vec2(parentSize.x, headerHeight)
+    }
+    alignmentX = "left"
+    alignmentY = "top"
+    subviews = {
+        {
+            id = "settingsBackButton"
+            type = "button"
+            buttonType = "imageHueShift"
+            path = "images/back.png"
+            pos = vec3(10,0, 0)
+            size = vec2(40,40)
+            alignmentX = "left"
+        }
+        {
+            type = "text"
+            text = "Settings"
+            font = "roboto"
+            additiveBlend = true
+            fontSize = 20
+        }
+    }
+}
+
+
+helpHeader = {
+    id = "helpHeader"
+    type = "color"
+    hidden = true
+    color = vec4(0.3,0.2,0.0,0.2)
+    onParentSizeChanged = function(parentSize)
+    {
+        return vec2(parentSize.x, headerHeight)
+    }
+    alignmentX = "left"
+    alignmentY = "top"
+    subviews = {
+        {
+            id = "helpBackButton"
+            type = "button"
+            buttonType = "imageHueShift"
+            path = "images/back.png"
+            pos = vec3(10,0, 0)
+            size = vec2(40,40)
+            alignmentX = "left"
+        }
+        {
+            id = "title"
+            type = "text"
+            text = "Help"
+            font = "roboto"
+            additiveBlend = true
+            fontSize = 20
+        }
+    }
+}
+
+
+createButton = function(buttonID, buttonTextID, buttonText)
+{
+    button = {
+        id = buttonID
+        type = "button"
+        buttonType = "color"
+        size = vec2(300,40)
+        color = vec4(0.0,0.5,0.5,0.2)
+        subviews = {
+            {
+                id = buttonTextID
+                type = "text"
+                #alignmentY = "bottom"
+                font = "roboto"
+                text = buttonText
+                fontSize = 20
+                #pos = vec3(0,5,0)
+            }
+        }
+    }
+    return button
+}
+
+content = {
+    id = "settingsContent"
+    hidden = true
+    type = "scrollView"
+    scrollViewRows = { #note scrollViewRows not subviews
+        {
+            id = "helpRow"
+            type = "view"
+            clip = true
+            onParentSizeChanged = function(parentSize)
+            {
+                return vec2(parentSize.x, 50)
+            }
+            subviews = {
+                createButton("helpButton", "helpButtonText", "Help...")
+            }
+            
+        }
+        {
+            id = "setupRow"
+            type = "view"
+            clip = true
+            onParentSizeChanged = function(parentSize)
+            {
+                return vec2(parentSize.x, 50)
+            }
+            subviews = {
+                createButton("setupButton", "setupButtonText", "Switch Library...")
+            }
+        }
+        {
+            id = "pitchControlsRow"
+            type = "view"
+            clip = true
+            onParentSizeChanged = function(parentSize)
+            {
+                return vec2(parentSize.x, 50)
+            }
+            subviews = {
+                {
+                    id = "showPitchControlsTitleText"
+                    type = "text"
+                    font = "roboto"
+                    text = "Show Pitch Controls:"
+                    fontSize = 20
+                    pos = vec3(-30, 0, 0) #about half of togglePitchControlsButton width + padding
+                }
+                {
+                    id = "togglePitchControlsButton"
+                    type = "button"
+                    buttonType = "imageHueShift"
+                    path = "images/toggleOn.png"
+                    pos = vec3(5, 0, 0)
+                    size = vec2(53,40)
+                    alignmentX = "outerRight"
+                    layoutParentID = "showPitchControlsTitleText"
+                }
+            }
+        }
+    }
+}
+
+helpContent = {
+    id = "helpContent"
+    hidden = true
+    type = "view"
+    subviews = {
+        {
+            id = "helpMarkup"
+            type = "markup"
+        }
+    }
+}
+
+helpMarkupLoaded = false
+delegate = false
+show = function(delegate_)
+{
+    .delegate = delegate_
+
+
+    settingsHeader = scene.getView("settingsHeader")
+    settingsContent = scene.getView("settingsContent")
+    helpHeader = scene.getView("helpHeader")
+    helpContent = scene.getView("helpContent")
+
+    helpButton = scene.getView("helpButton")
+    setupButton = scene.getView("setupButton")
+    togglePitchControlsButton = scene.getView("togglePitchControlsButton")
+
+    .pitchControlsEnabled = database.get("pitchControlsEnabled")
+
+    if(pitchControlsEnabled)
+    {
+        togglePitchControlsButton.path = "images/toggleOn.png"
+    }
+    else
+    {
+        togglePitchControlsButton.path = "images/toggleOff.png"
+    }
+
+    settingsBackButton = scene.getView("settingsBackButton")
+    helpBackButton = scene.getView("helpBackButton")
+
+    settingsHeader.hidden = false
+    settingsContent.hidden = false
+
+    helpButton.click = function()
+    {
+        if(!helpMarkupLoaded)
+        {
+            helpMarkupView = scene.getView("helpMarkup")
+            helpPath = file.getResourcePath("help.tml")
+            helpMarkupData = file.loadData(helpPath)
+            helpMarkupView.setText(helpMarkupData)
+            .helpMarkupLoaded = true
+        }
+
+        settingsHeader.hidden = true
+        settingsContent.hidden = true
+
+        helpHeader.hidden = false
+        helpContent.hidden = false
+    }
+
+    
+    helpBackButton.click = function()
+    {
+        helpHeader.hidden = true
+        helpContent.hidden = true
+
+        settingsHeader.hidden = false
+        settingsContent.hidden = false
+    }
+
+    settingsBackButton.click = function()
+    {
+        settingsHeader.hidden = true
+        settingsContent.hidden = true
+        delegate.settingsBackFunction()
+    }
+
+    togglePitchControlsButton.click = function()
+    {
+        pitchControlsEnabled = database.get("pitchControlsEnabled")
+        if(pitchControlsEnabled)
+        {
+            pitchControlsEnabled = false
+            togglePitchControlsButton.path = "images/toggleOff.png"
+        }
+        else
+        {
+            pitchControlsEnabled = true
+            togglePitchControlsButton.path = "images/toggleOn.png"
+        }
+        database.set("pitchControlsEnabled", pitchControlsEnabled)
+        delegate.settingChangedFunction("pitchControlsEnabled", pitchControlsEnabled)
+    }
+}

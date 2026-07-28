@@ -358,6 +358,11 @@ settingsBackFunction = function()
     playlistContentView.hidden = false
 }
 
+setupButtonClicked = function()
+{
+    katipo.callAppFunction("runSetup") #callAppFunction defined in Waraki.cpp, calls through to waraki-app/waraki.tui:katipo.registerAppFunction()
+}
+
 settingsButton.click = function()
 {
     playlistsHeader.hidden = true
@@ -366,6 +371,7 @@ settingsButton.click = function()
     delegateInfo = {
         settingsBackFunction = settingsBackFunction
         settingChangedFunction = settingChangedFunction
+        setupButtonClicked = setupButtonClicked
     }
     settingsUI.show(delegateInfo)
 }

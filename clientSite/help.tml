@@ -1,11 +1,16 @@
 # Waraki music player
 
-Waraki lets you host your full music library on one device, which shares smaller playlists for playback from many other devices.
+If you have a bunch of music files in a directory gathering dust, you can now listen to them!
 
-If you're seeing this, you have a host running, you may also need to edit the config.tui file on the server to point it at your music library. 
+Store your files on a hard drive on a desktop computer, laptop or server of some kind, a mac, pc, or raspberry pi. Let's call it a potato. Your files can be nested in directories, like //music/Artist/Album/Song.mp3 to make it easier for you to find them.
 
-Once your music library has been scanned, you can then add a playlist with the '+' button, and add songs. You can tap a song to play it, which may take a while to buffer first.
+Run Waraki on the potato, select "Create new music library" and select your music library. You can then play music directly on the potato. (Waraki can be hosted from headless potatoes too!)
 
-Once you have added songs to a playlist, you can tap it in the main list to shuffle play.
+Now with Waraki running, install and run the Waraki app on a playback device, like on your iPhone. Select "Connect to music library", then it can scan your local network and find Waraki running on your potato, or you can enter the IP address of a remote potato.
 
-Playlists are shared across all devices that connect to this host, edits are synchronized. However the download toggle is set per device.
+Now you can share songs and playlists across all your devices without having to think about it.
+
+Waraki doesn't stream your music, as you don't want to always have that potato running. Instead you toggle which playlists are downloaded on each device, and then only the required music files are downloaded. 
+
+When the potato is online, every time you start the app or change a playlist, it will download any required songs quickly and wirelessly. And once downloaded, that music is playable even when the potato is offline and is automatically removed if it is no longer on any playlists.
+

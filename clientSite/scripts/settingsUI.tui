@@ -247,4 +247,9 @@ show = function(delegate_)
         database.set("pitchControlsEnabled", pitchControlsEnabled)
         delegate.settingChangedFunction("pitchControlsEnabled", pitchControlsEnabled)
     }
+
+    setupButton.click = function()
+    {
+        delegate.setupButtonClicked()
+    }
 }

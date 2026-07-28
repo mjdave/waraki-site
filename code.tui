@@ -4,49 +4,79 @@
 siteInfo = require(katipo.sitePath + "/site.tui")
 host = katipo.host
 
+loadSuccess = true
+
 configPath = file.getAbsolutePath(katipo.privateSavePath + "/config.tui")
 print("loading config at path:", configPath)
-config = file.load(configPath)
 
-if(!config)
+incomingMusicLibraryPath = false
+loadedConfig = false
+
+if(katipo.userConfiguration) #this might be too much of an assumption
 {
+    print("found userConfiguration:", katipo.userConfiguration)
+    incomingMusicLibraryPath = katipo.userConfiguration.musicLibraryPath
+}
+else
+{
+    loadedConfig = file.load(configPath)
+    print("loadedConfig:", loadedConfig)
+}
+
+
+if(!loadedConfig)
+{
+    defaultPath = "/set/your/music/library/path/here"
+
+    if(incomingMusicLibraryPath)
+    {
+        defaultPath = incomingMusicLibraryPath
+    }
+
     configString = "
 # Waraki host configuration file
 # anything after '#' like this entire line is a comment and is ignored. To change a given setting, you change the value after the '='
 # musicDirectoryPath: set this to the directory that contains music files and .m3u playlists. All files can be nested in subdirectories.
-musicDirectoryPath = \"/home/dave/warakiMusic\"
+musicDirectoryPath = '"
 
-# doCrawlOnLaunch Will crawl anyway if the cache file is not found, but you can turn off the crawl if you know your music library won't change
+configString += defaultPath
+
+configString += "'\n"
+
+configString += "# doCrawlOnLaunch Will crawl anyway if the cache file is not found, but you can turn off the crawl if you know your music library won't change
 doCrawlOnLaunch = true
 
 # recrawlFrequencySeconds Recrawls the library on disk for new music files every x seconds. Set to nil to disable recrawling. The default is to recrawl every 10 minutes
 recrawlFrequencySeconds = 10 * 60
 
 # importM3UPlaylists will attempt to import any .m3u files when crawling. Remember to turn this off again, or it will keep importing more copies
-importM3UPlaylists = false
+importM3UPlaylists = false"
 
-"
     file.saveData(configPath, configString)
     print("saved config:", configPath)
-    config = file.load(configPath)
+    loadedConfig = file.load(configPath)
 }
 
-musicDirectoryPath = config.musicDirectoryPath
-doCrawlOnLaunch = config.doCrawlOnLaunch
-convertM4AToMP3 = config.convertM4AToMP3 #used by dave, not really for public use but you could get it working
-importM3UPlaylists = config.importM3UPlaylists
-recrawlFrequencySeconds = config.recrawlFrequencySeconds
+musicDirectoryPath = loadedConfig.musicDirectoryPath
+doCrawlOnLaunch = loadedConfig.doCrawlOnLaunch
+convertM4AToMP3 = loadedConfig.convertM4AToMP3 #used by dave, not really for public use but you could get it working
+importM3UPlaylists = loadedConfig.importM3UPlaylists
+recrawlFrequencySeconds = loadedConfig.recrawlFrequencySeconds
 
 if(!file.fileExists(musicDirectoryPath))
 {
-    error("musicDirectoryPath not found:", musicDirectoryPath, " please edit ", configPath, " and set musicDirectoryPath to a directory containing your music files.")
+    print("ERROR: musicDirectoryPath not found:", musicDirectoryPath, "\nplease edit ", configPath, " and set musicDirectoryPath to a directory containing your music files.")
+    loadSuccess = false
+    return
 }
 
 
 clientSitePath = file.getAbsolutePath(katipo.sitePath + "/clientSite")
 if(!file.fileExists(clientSitePath))
 {
-    error("missing publicData directory:", clientSitePath)
+    print("ERROR: missing publicData directory:", clientSitePath)
+    loadSuccess = false
+    return
 }
 
 songServerInfosBySongID = {}
@@ -253,20 +283,15 @@ get = function(url, clientData)
 
 timeAccumulator = 0.0
 
-runLoop = function()
+update = function(dt)
 {
-    while(true)
+    if(recrawlFrequencySeconds)
     {
-        sleep(1.0)
-
-        if(recrawlFrequencySeconds)
+        timeAccumulator += dt
+        if(timeAccumulator > recrawlFrequencySeconds)
         {
-            timeAccumulator += 1.0
-            if(timeAccumulator > recrawlFrequencySeconds)
-            {
-                .timeAccumulator = 0.0
-                doCrawl()
-            }
+            .timeAccumulator = 0.0
+            doCrawl()
         }
     }
 }
@@ -289,3 +314,5 @@ init = function() #called just after katipo.init. The database is now ready to u
         doCrawl()
     }
 }
+
+print("got to end of load:", loadSuccess)

@@ -57,7 +57,7 @@ importM3UPlaylists = false"
     loadedConfig = file.load(configPath)
 }
 
-musicDirectoryPath = loadedConfig.musicDirectoryPath
+musicDirectoryPath = loadedConfig.musicDirectoryPath #note:accessed by C++
 doCrawlOnLaunch = loadedConfig.doCrawlOnLaunch
 convertM4AToMP3 = loadedConfig.convertM4AToMP3 #used by dave, not really for public use but you could get it working
 importM3UPlaylists = loadedConfig.importM3UPlaylists

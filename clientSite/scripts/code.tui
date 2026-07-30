@@ -6,10 +6,16 @@ keys = require("app/common/keys.tui")
 editPlaylistUI = require("scripts/editPlaylistUI.tui")
 settingsUI = require("scripts/settingsUI.tui")
 
-songsCachePath = file.getSavePath("files/songs/")
+bundledHostLocalSongPath = katipo.warakiBundledHostLocalSongPath
+songsCachePath = false
 
-file.createDirectoriesIfNeededForDirPath(songsCachePath)
+if(!bundledHostLocalSongPath)
+{
+    songsCachePath = file.getSavePath("files/songs/")
+    file.createDirectoriesIfNeededForDirPath(songsCachePath)
+}
 
+print("bundledHostLocalSongPath:", bundledHostLocalSongPath)
 print("songsCachePath:", songsCachePath)
 
 paused = true
@@ -150,6 +156,11 @@ checkForNextFileAndDownloadIfNeeded = function()
 
 updateDownloads = function()
 {
+    if(bundledHostLocalSongPath) #we don't need to download anything
+    {
+        return
+    }
+
     if(!currentRequestedSongDownloadInfo)
     {
         if(table.count(songDownloadArray) > 0)
@@ -208,6 +219,11 @@ recursivelyAddFilesToRemove = function(localPath)
 
 updateCleanup = function()
 {
+    if(bundledHostLocalSongPath)
+    {
+        return
+    }
+
     if(downloadsComplete and !cleanupComplete)
     {
         if(!filesToRemove)
@@ -389,21 +405,27 @@ editPlaylistBackClick = function()
 
 playPreview = function(songInfo)
 {
-    thisSongCachePath = songsCachePath + songInfo.localPath
-
-    if(!file.fileExists(thisSongCachePath))
+    thisSongCachePath = false
+    if(bundledHostLocalSongPath)
     {
-        addDownload(songInfo, true)
+        thisSongCachePath = bundledHostLocalSongPath + songInfo.localPath
     }
     else
     {
-        .playbackURLQueue = {}
-        table.insert(playbackURLQueue, thisSongCachePath)
-        audio.queueSongs(playbackURLQueue)
-        .paused = false
-        updatePauseButton()
-        audio.playSongs()
+        thisSongCachePath = songsCachePath + songInfo.localPath
+        if(!file.fileExists(thisSongCachePath))
+        {
+            addDownload(songInfo, true)
+            return
+        }
     }
+    
+    .playbackURLQueue = {}
+    table.insert(playbackURLQueue, thisSongCachePath)
+    audio.queueSongs(playbackURLQueue)
+    .paused = false
+    updatePauseButton()
+    audio.playSongs()
 }
 
 addPlaylistButton.click = function()
@@ -535,7 +557,16 @@ playSelectedPlaylist = function()
 
         for(songInfo in selectedPlaylist.songs)
         {
-            thisSongCachePath = songsCachePath + songInfo.localPath
+            thisSongCachePath = false
+            if(bundledHostLocalSongPath)
+            {
+                thisSongCachePath = bundledHostLocalSongPath + songInfo.localPath
+            }
+            else
+            {
+                thisSongCachePath = songsCachePath + songInfo.localPath
+            }
+            
             if(file.fileExists(thisSongCachePath))
             {
                 table.insert(playbackURLQueue, thisSongCachePath)

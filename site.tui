@@ -1,7 +1,8 @@
 ### this is a basic configuration file, which is sent to the tracker to advertise this site
 
-nameKey = "waraki" #used to uniquely identify this site
-version = "0.1"
+nameKey = "waraki" #used to uniquely identify this site on the tracker.
+broadcastKey = "waraki" #advertise this site for clients looking for this key. Eg the Waraki app looks for "waraki" hosts
+version = "0.9"
 title = "Waraki" #displayed name
 keywords = { "waraki", "mp3", "music", "player" } #used for search
 description = "Serves music files from a local directory, and allows clients to connect and listen" #used for search and more info

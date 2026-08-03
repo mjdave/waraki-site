@@ -16,6 +16,7 @@ if(katipo.userConfiguration) #this might be too much of an assumption
 {
     print("found userConfiguration:", katipo.userConfiguration)
     incomingMusicLibraryPath = katipo.userConfiguration.musicLibraryPath
+    incomingMusicLibraryPath = string.replace(incomingMusicLibraryPath, "\\", "\\\\")
 }
 else
 {

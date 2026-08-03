@@ -95,6 +95,14 @@ content = {
     type = "scrollView"
     scrollViewRows = { #note scrollViewRows not subviews
         {
+            id = "padding"
+            type = "view"
+            onParentSizeChanged = function(parentSize)
+            {
+                return vec2(parentSize.x, 10)
+            }
+        }
+        {
             id = "helpRow"
             type = "view"
             clip = true

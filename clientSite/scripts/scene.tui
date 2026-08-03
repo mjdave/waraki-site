@@ -204,6 +204,7 @@ addSongHeader = {
         }
         {
             id = "searchButton"
+            hidden = true #disabled for now, not implemented yet
             type = "button"
             buttonType = "imageHueShift"
             path = "images/search.png"

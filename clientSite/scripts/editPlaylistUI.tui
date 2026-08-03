@@ -115,9 +115,43 @@ saveCurrentPlaylist = function()
     }
 }
 
-toggleSongAddedToPlaylist = function(buttonView, itemView, backgroundView, updateSelectionState)
+addOrRemoveSongWithoutSavingOrUpdatingUI = function(songInfo, shouldAdd) #warning similar to below, I am in a rush
 {
-    songInfo = itemView.fileInfo
+    if(shouldAdd)
+    {
+        if(!playlistAddedSongIDs[songInfo.songID])
+        {
+            table.insert(playlistContent, songInfo)
+            playlistAddedSongIDs[songInfo.songID] = true
+
+            if(!currentPlaylistID)
+            {
+                newPlaylistID = string.sha1(playlistTitle + songInfo.songID + math.random()) #todo tui needs a random sha1 function
+                newPlaylistID = string.subString(newPlaylistID, 0, 8)
+                .currentPlaylistID = newPlaylistID
+            }
+        }
+    }
+    else
+    {
+        if(playlistAddedSongIDs[songInfo.songID])
+        {
+            playlistAddedSongIDs[songInfo.songID] = nil
+            for(i,addedSongInfo in playlistContent)
+            {
+                if(addedSongInfo.songID == songInfo.songID)
+                {
+                    table.remove(playlistContent, i)
+                    break
+                }
+            }
+        }
+    }
+}
+
+
+toggleSongAddedToPlaylist = function(buttonView, songInfo, backgroundView, updateSelectionState)
+{
     if(playlistAddedSongIDs[songInfo.songID])
     {
         playlistAddedSongIDs[songInfo.songID] = nil
@@ -156,6 +190,8 @@ toggleSongAddedToPlaylist = function(buttonView, itemView, backgroundView, updat
         saveCurrentPlaylist()
     }
 
+    updateAddAllButtons(addSongFileBrowser)
+
     #print("playlistContent:", playlistContent)
 }
 
@@ -174,7 +210,7 @@ onBrowserItemCreate = function(itemView, index)
 
         addButtonView.click = function()
         {
-            toggleSongAddedToPlaylist(addButtonView, itemView, backgroundView, true)
+            toggleSongAddedToPlaylist(addButtonView, itemView.fileInfo, backgroundView, true)
         }
         addButtonView.setHueOffset(-0.1 * index)
 
@@ -189,6 +225,38 @@ onBrowserItemCreate = function(itemView, index)
         {
             backgroundView.setSelected(true)
         }
+    }
+    else if(itemView.fileInfo.files)
+    {
+        checkFiles = function(files)
+        {
+            for(thisFile in files)
+            {
+                if(thisFile.songID)
+                {
+                    if(playlistAddedSongIDs[thisFile.songID])
+                    {
+                        return true
+                    }
+                }
+                else if(thisFile.files)
+                {
+                    if(checkFiles(thisFile.files))
+                    {
+                        return true
+                    }
+                }
+            }
+            return false
+        }
+
+        foundAddedFile = checkFiles(itemView.fileInfo.files)
+        if(foundAddedFile)
+        {
+            backgroundView = itemView.getView("fileItemBackground")
+            backgroundView.setSelected(true)
+        }
+
     }
 }
 
@@ -222,7 +290,7 @@ onMainPlaylistItemCreate = function(itemView, index)
 
         addButtonView.click = function()
         {
-            toggleSongAddedToPlaylist(addButtonView, itemView, backgroundButtonView, false)
+            toggleSongAddedToPlaylist(addButtonView, itemView.fileInfo, backgroundButtonView, false)
             updateVisualsForThisItem()
         }
         addButtonView.setHueOffset(-0.1 * index)
@@ -242,10 +310,86 @@ onMainPlaylistItemCreate = function(itemView, index)
     }
 }
 
-onBrowserContentChange = function()
+updateAddAllButtons = function(fileBrowserView)
+{
+    addAllButton = addSongFileBrowser.getView("addAllButton")
+
+    foundFileToAdd = false
+    foundFileToRemove = false
+
+    addFiles = {}
+    removeFiles = {}
+
+    if(fileBrowserView.currentFile)
+    {
+        files = fileBrowserView.currentFile.files
+        if(files)
+        {
+            for(thisFile in files)
+            {
+                if(thisFile.localPath)
+                {
+                    if(playlistAddedSongIDs[thisFile.songID])
+                    {
+                        .foundFileToRemove = true
+                        table.insert(removeFiles, thisFile)
+                    }
+                    else
+                    {
+                        .foundFileToAdd = true
+                        table.insert(addFiles, thisFile)
+                    }
+                }
+            }
+        }
+    }
+
+    if(foundFileToAdd)
+    {
+        addAllButton.hidden = false
+
+        addAllClick = function()
+        {
+            for(fileInfo in addFiles)
+            {
+                addOrRemoveSongWithoutSavingOrUpdatingUI(fileInfo, true)
+            }
+            saveCurrentPlaylist()
+            fileBrowser.reloadCurrentView(fileBrowserView)
+        }
+
+        addAllButton.setClickFunction(addAllClick)
+        addAllButton.path = "images/addAll.png"
+    }
+    else if(foundFileToRemove)
+    {
+        addAllButton.hidden = false
+
+        removeAllClick = function()
+        {
+            for(fileInfo in removeFiles)
+            {
+                addOrRemoveSongWithoutSavingOrUpdatingUI(fileInfo, false)
+            }
+            saveCurrentPlaylist()
+            fileBrowser.reloadCurrentView(fileBrowserView)
+        }
+
+        addAllButton.setClickFunction(removeAllClick)
+        addAllButton.path = "images/removeAll.png"
+    }
+    else
+    {
+        addAllButton.hidden = true
+    }
+}
+
+onBrowserContentChange = function(fileBrowserView)
 {
     .currentPreviewPlayingItemView = false
     .currentPreviewPlayingFileBrowserItemView = false
+
+    updateAddAllButtons(fileBrowserView)
 }
 
 loadPlaylistContent = function()

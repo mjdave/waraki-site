@@ -18,7 +18,7 @@ header = {
             type = "button"
             buttonType = "imageHueShift"
             path = "images/back.png"
-            pos = vec3(10,0, 0)
+            pos = vec3(5,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
         }
@@ -50,7 +50,7 @@ helpHeader = {
             type = "button"
             buttonType = "imageHueShift"
             path = "images/back.png"
-            pos = vec3(10,0, 0)
+            pos = vec3(5,0, 0)
             size = vec2(40,40)
             alignmentX = "left"
         }

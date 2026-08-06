@@ -6,6 +6,7 @@ playlistTitle = "New Playlist"
 playlistContent = {}
 playlistAddedSongIDs = {}
 currentPlaylistID = false
+shuffleDisabled = false
 
 addSongFileBrowser = false #means nil
 playlistTitleTextEntry = false
@@ -20,16 +21,14 @@ table.insert(fileBrowser.fileItemLayout.subviews, {
     buttonType = "imageHueShift"
     clip = true
     path = "images/add.png"
-    pos = vec3(-10,0, 0)
+    pos = vec3(-5,0, 0)
     size = scene.addAndPlayButtonSize
     alignmentX = "right"
 })
 
 currentPreviewPlayingFileBrowserItemView = false
 currentPreviewPlayingItemView = false
-currentPreviewPlayingSongID = false
-
-
+currentPreviewPlayingSongURL = false
 
 searchTextEntry.onStartedEditing = function()
 {
@@ -78,18 +77,91 @@ clearAnyCurrentPlayingSelection = function()
     }
 }
 
+updateReorderButtonsHidden = function()
+{
+    playlistScrollView = scene.getView("editPlaylistCurrentPlaylistScrollView")
+    rowCount = table.count(playlistScrollView.rowInfos)
+    for(i=0, i < rowCount, i++)
+    {
+        rowInfo = playlistScrollView.rowInfos[i]
+        itemView = rowInfo.rowView
+        moveUpButton = itemView.getView("moveUpButton")
+        moveDownButton = itemView.getView("moveDownButton")
+        songItemTitle = itemView.getView("songItemTitle")
+        if(!shuffleDisabled)
+        {
+            moveUpButton.hidden = true
+            moveDownButton.hidden = true
+            songItemTitle.layoutParent = itemView.getView("addButton")
+        }
+        else
+        {
+            songItemTitle.layoutParent = moveDownButton
+            if(i > 0)
+            {
+                moveUpButton.hidden = false
+            }
+            else
+            {
+                moveUpButton.hidden = true
+            }
+
+            if(i < rowCount - 1)
+            {
+                moveDownButton.hidden = false
+            }
+            else
+            {
+                moveDownButton.hidden = true
+            }
+        }
+    }
+}
+
+playingSongChanged = function()
+{
+    .currentPreviewPlayingSongURL = audio.currentTrackPath()
+    if(currentPreviewPlayingSongURL and currentPreviewPlayingSongURL != "")
+    {
+        print("playingSongChanged:", currentPreviewPlayingSongURL)
+        if(currentPreviewPlayingItemView)
+        {
+            backgroundButtonView = currentPreviewPlayingItemView.getView("playlistSongItemBackground")
+            backgroundButtonView.setSelected(false)
+            .currentPreviewPlayingItemView = false
+        }
+
+
+        playlistScrollView = scene.getView("editPlaylistCurrentPlaylistScrollView")
+
+        for(i=0, i < table.count(playlistScrollView.rowInfos), i++)
+        {
+            rowInfo = playlistScrollView.rowInfos[i]
+            itemView = rowInfo.rowView
+            print("itemView:", itemView)
+            if(currentPreviewPlayingSongURL == itemView.songFullURL)
+            {
+                print("found")
+                backgroundButtonView = itemView.getView("playlistSongItemBackground")
+                backgroundButtonView.setSelected(true)
+                .currentPreviewPlayingItemView = itemView
+                break
+            }
+        }
+    }
+}
+
 #file browser
-playFileBrowserPreview = function(fileBrowserItemView) #todo this downloads the song, never deletes it
+playFileBrowserPreview = function(fileBrowserItemView)
 {
     clearAnyCurrentPlayingSelection()
     .currentPreviewPlayingFileBrowserItemView = fileBrowserItemView
 
     delegate.playPreview(fileBrowserItemView.fileInfo)
-    .currentPreviewPlayingSongID = fileBrowserItemView.fileInfo.songID
 }
 
 #non file browser
-playPreview = function(itemView) #todo this downloads the song, never deletes it
+playPreview = function(itemView)
 {
     clearAnyCurrentPlayingSelection()
     .currentPreviewPlayingItemView = itemView
@@ -98,7 +170,6 @@ playPreview = function(itemView) #todo this downloads the song, never deletes it
     backgroundButtonView.setSelected(true)
 
     delegate.playPreview(itemView.fileInfo)
-    .currentPreviewPlayingSongID = itemView.fileInfo.songID
 }
 
 saveCurrentPlaylist = function()
@@ -212,7 +283,7 @@ onBrowserItemCreate = function(itemView, index)
         {
             toggleSongAddedToPlaylist(addButtonView, itemView.fileInfo, backgroundView, true)
         }
-        addButtonView.setHueOffset(-0.1 * index)
+        addButtonView.setHueOffset(-0.1 * itemView.rowIndex)
 
         highlight = false
         if(playlistAddedSongIDs[itemView.fileInfo.songID])
@@ -264,7 +335,7 @@ onBrowserItemCreate = function(itemView, index)
 onMainPlaylistItemCreate = function(itemView, index)
 {
     backgroundButtonView = itemView.getView("playlistSongItemBackground")
-    if(index % 2 == 0)
+    if(itemView.rowIndex % 2 == 0)
     {
         backgroundButtonView.color = backgroundButtonView.color * 0.5
     }
@@ -293,14 +364,47 @@ onMainPlaylistItemCreate = function(itemView, index)
             toggleSongAddedToPlaylist(addButtonView, itemView.fileInfo, backgroundButtonView, false)
             updateVisualsForThisItem()
         }
-        addButtonView.setHueOffset(-0.1 * index)
+        addButtonView.setHueOffset(-0.1 * itemView.rowIndex)
+
+        moveUpButton = itemView.getView("moveUpButton")
+        moveUpButton.click = function()
+        {
+            prevInfo = playlistContent[itemView.rowIndex]
+            table.remove(playlistContent, itemView.rowIndex)
+            table.insert(playlistContent, itemView.rowIndex - 1, prevInfo)
+
+            saveCurrentPlaylist()
+
+            playlistScrollView = scene.getView("editPlaylistCurrentPlaylistScrollView")
+            playlistScrollView.moveRow(itemView.rowIndex, itemView.rowIndex - 1)
+            updateReorderButtonsHidden()
+        }
+        moveUpButton.setHueOffset(-0.1 * itemView.rowIndex - 0.1)
+
+        moveDownButton = itemView.getView("moveDownButton")
+        moveDownButton.click = function()
+        {
+            prevInfo = playlistContent[itemView.rowIndex]
+            table.remove(playlistContent, itemView.rowIndex)
+            table.insert(playlistContent, itemView.rowIndex + 1, prevInfo)
+
+            saveCurrentPlaylist()
+
+            playlistScrollView = scene.getView("editPlaylistCurrentPlaylistScrollView")
+            playlistScrollView.moveRow(itemView.rowIndex, itemView.rowIndex + 1)
+            updateReorderButtonsHidden()
+        }
+        moveDownButton.setHueOffset(-0.1 * itemView.rowIndex - 0.2)
 
 
         backgroundButtonView.click = function()
         {
             playPreview(itemView)
         }
-        if(currentPreviewPlayingSongID == itemView.fileInfo.songID)
+
+        itemView.songFullURL = delegate.getFullSongPath(itemView.fileInfo.localPath)
+
+        if(currentPreviewPlayingSongURL == itemView.songFullURL)
         {
             backgroundButtonView.setSelected(true)
             .currentPreviewPlayingItemView = itemView
@@ -408,14 +512,14 @@ loadPlaylistContent = function()
         {
             return a.fileName < b.fileName
         }
-        sortedFiles = {}
-        for(i,songInfo in playlistContent)
-        {
-            table.insert(sortedFiles, songInfo)
-        }
-        table.sort(sortedFiles, compareFunction)
+        #sortedFiles = {}
+        #for(i,songInfo in playlistContent)
+        ##{
+        #    table.insert(sortedFiles, songInfo)
+        #}
+        #table.sort(sortedFiles, compareFunction)
 
-        for(i,songInfo in sortedFiles)
+        for(i,songInfo in playlistContent)
         {
             itemView = playlistScrollView.addView(itemLayout)
             itemView.fileInfo = songInfo
@@ -475,6 +579,7 @@ show = function(directoryTree, playlistOrNil)
     }
 
     toggleDownloadButton = scene.getView("toggleDownloadButton")
+    shuffleButton = scene.getView("shuffleButton")
 
     if(!addSongFileBrowser)
     {
@@ -526,12 +631,34 @@ show = function(directoryTree, playlistOrNil)
             }
         }
 
+        shuffleButton.click = function()
+        {
+            disabledKey = "shuffleDisabled_" + currentPlaylistID
+            oldDisabled = database.get(disabledKey)
+            newDisabled = !oldDisabled
+            database.set(disabledKey, newDisabled)
+
+            if(newDisabled)
+            {
+                shuffleButton.path = "images/shuffleOff.png"
+            }
+            else
+            {
+                shuffleButton.path = "images/shuffleOn.png"
+            }
+
+            .shuffleDisabled = newDisabled
+            updateReorderButtonsHidden()
+        }
+        
+
         addSongBackButton.click = function()
         {
             editPlaylistHeader.hidden = false
             editPlaylistContent.hidden = false
 
             loadPlaylistContent()
+            updateReorderButtonsHidden()
 
             addSongHeader.hidden = true
             addSongFileBrowser.hidden = true
@@ -557,10 +684,14 @@ show = function(directoryTree, playlistOrNil)
     }
 
     downloadDisabled = false
+
     if(currentPlaylistID)
     {
         disabledKey = "disabled_" + currentPlaylistID
         downloadDisabled = database.get(disabledKey)
+
+        shuffleDisabledKey = "shuffleDisabled_" + currentPlaylistID
+        .shuffleDisabled = database.get(shuffleDisabledKey)
     }
     
     if(downloadDisabled)
@@ -572,5 +703,15 @@ show = function(directoryTree, playlistOrNil)
         toggleDownloadButton.path = "images/downloadOn.png"
     }
 
+    if(shuffleDisabled)
+    {
+        shuffleButton.path = "images/shuffleOff.png"
+    }
+    else
+    {
+        shuffleButton.path = "images/shuffleOn.png"
+    }
+
     updatePlaylistTitle()
+    updateReorderButtonsHidden()
 }

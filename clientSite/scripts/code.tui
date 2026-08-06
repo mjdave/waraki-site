@@ -403,16 +403,21 @@ editPlaylistBackClick = function()
     editPlaylistContent.hidden = true
 }
 
-playPreview = function(songInfo)
+getFullSongPath = function(localPath)
 {
-    thisSongCachePath = false
     if(bundledHostLocalSongPath)
     {
-        thisSongCachePath = bundledHostLocalSongPath + songInfo.localPath
+        return bundledHostLocalSongPath + localPath
     }
-    else
+
+    return songsCachePath + localPath
+}
+
+playPreview = function(songInfo)
+{
+    thisSongCachePath = getFullSongPath(songInfo.localPath)
+    if(!bundledHostLocalSongPath)
     {
-        thisSongCachePath = songsCachePath + songInfo.localPath
         if(!file.fileExists(thisSongCachePath))
         {
             addDownload(songInfo, true)
@@ -557,15 +562,7 @@ playSelectedPlaylist = function()
 
         for(songInfo in selectedPlaylist.songs)
         {
-            thisSongCachePath = false
-            if(bundledHostLocalSongPath)
-            {
-                thisSongCachePath = bundledHostLocalSongPath + songInfo.localPath
-            }
-            else
-            {
-                thisSongCachePath = songsCachePath + songInfo.localPath
-            }
+            thisSongCachePath = getFullSongPath(songInfo.localPath)
             
             if(file.fileExists(thisSongCachePath))
             {
@@ -579,7 +576,14 @@ playSelectedPlaylist = function()
 
         if(table.count(playbackURLQueue) > 0)
         {
-            table.shuffle(playbackURLQueue)
+            shuffleDisabledKey = "shuffleDisabled_" + selectedPlaylist.playlistID
+            playlistShuffleDisabled = database.get(shuffleDisabledKey)
+
+            if(!playlistShuffleDisabled)
+            {
+                table.shuffle(playbackURLQueue)
+            }
+
             print("playbackURLQueue:", playbackURLQueue)
             audio.queueSongs(playbackURLQueue)
             .paused = false
@@ -594,6 +598,7 @@ audio.playingSongChanged = function(title, artist, duration)
     print("got song changed:", title, " artist:", artist)
     songTitleView.text = title
     songArtistView.text = artist
+    editPlaylistUI.playingSongChanged()
 }
 
 
@@ -713,7 +718,7 @@ loadPlaylists = function()
             backgroundView.baseColor = backgroundView.color
             itemView.baseColor = backgroundView.color
 
-            backgroundView.selectedColor = itemView.baseColor + vec4(0.2,0.0,0.5,0.3)
+            #backgroundView.selectedColor = itemView.baseColor + vec4(0.2,0.0,0.5,0.3)
 
             #playlistScrollView.insertRow(itemView)
             table.insert(playlistViews, itemView)
@@ -763,6 +768,7 @@ editPlaylistUI.delegate = { #expose public functions to editPlaylistUI via "dele
     playPauseButtonClick = playPauseButtonClick
     backButtonClicked = editPlaylistBackClick
     savePlaylist = savePlaylist
+    getFullSongPath = getFullSongPath
 }
 
 katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we just pulled an update of the site. false if we are running from the cache, but now have a connection

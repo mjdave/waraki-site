@@ -398,6 +398,20 @@ mainView = {
                     size = vec2(40,40)
                     alignmentY = "top"
                 }
+
+
+                {
+                    id = "lyricsButton"
+                    type = "button"
+                    buttonType = "imageHueShift"
+                    path = "images/up.png"
+                    pos = vec3(120, -5, 0)
+                    size = vec2(40,40)
+                    alignmentY = "top"
+                    hidden = true
+                }
+                
+
                 {
                     id = "songTitle"
                     type = "text"

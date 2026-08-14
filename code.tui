@@ -24,8 +24,7 @@ else
     print("loadedConfig:", loadedConfig)
 }
 
-
-if(!loadedConfig)
+createAndSaveDefaultConfig = function()
 {
     defaultPath = "/set/your/music/library/path/here"
 
@@ -55,6 +54,12 @@ importM3UPlaylists = false"
 
     file.saveData(configPath, configString)
     print("saved config:", configPath)
+}
+
+
+if(!loadedConfig)
+{
+    createAndSaveDefaultConfig()
     loadedConfig = file.load(configPath)
 }
 
@@ -63,22 +68,7 @@ doCrawlOnLaunch = loadedConfig.doCrawlOnLaunch
 convertM4AToMP3 = loadedConfig.convertM4AToMP3 #used by dave, not really for public use but you could get it working
 importM3UPlaylists = loadedConfig.importM3UPlaylists
 recrawlFrequencySeconds = loadedConfig.recrawlFrequencySeconds
-
-if(!file.fileExists(musicDirectoryPath))
-{
-    print("ERROR: musicDirectoryPath not found:", musicDirectoryPath, "\nplease edit ", configPath, " and set musicDirectoryPath to a directory containing your music files.")
-    loadSuccess = false
-    return
-}
-
-
-clientSitePath = file.getAbsolutePath(katipo.sitePath + "/clientSite")
-if(!file.fileExists(clientSitePath))
-{
-    print("ERROR: missing publicData directory:", clientSitePath)
-    loadSuccess = false
-    return
-}
+scanForLyrics = loadedConfig.scanForLyrics
 
 songServerInfosBySongID = {}
 directoryTree = {}
@@ -125,6 +115,7 @@ doCrawl = function()
     libraryCrawler = require(katipo.sitePath + "/libraryCrawler.tui")
     libraryCrawler.convertM4AToMP3 = convertM4AToMP3
     libraryCrawler.importM3UPlaylists = importM3UPlaylists
+    libraryCrawler.scanForLyrics = scanForLyrics
     libraryCrawler.runCrawl(musicDirectoryPath)
 
     if(importM3UPlaylists)
@@ -263,6 +254,7 @@ get = function(url, clientData)
             return {
                 status = "ok"
                 songID = songID
+                lyricsPageCount = songInfo.lyricsPageCount
                 fileName = songInfo.fileName
                 filePath = songInfo.path #internally, katipo looks for filePath and will replace this with the contents of the file. todo should probably just send the data here instead
             }
@@ -306,6 +298,43 @@ init = function() #called just after katipo.init. The database is now ready to u
     if(!sharedPlaylists)
     {
         .sharedPlaylists = {}
+    }
+
+    if(katipo.createSecurityBookmarkForDirectory) #this function is not always set, this is only for macos sandbox security
+    {
+        if(incomingMusicLibraryPath)
+        {
+            securityBookmark = katipo.createSecurityBookmarkForDirectory(incomingMusicLibraryPath)
+            if(securityBookmark and string.length(securityBookmark) > 0)
+            {
+                host.setPrivateData("b_" + musicDirectoryPath, securityBookmark)
+            }
+        }
+        else
+        {
+            securityBookmark = host.getPrivateData("b_" + musicDirectoryPath)
+            if(securityBookmark)
+            {
+                result = katipo.resolveSecurityBookmark(securityBookmark)
+            }
+        }
+    }
+
+
+    if(!file.fileExists(musicDirectoryPath))
+    {
+        print("ERROR: musicDirectoryPath not found:", musicDirectoryPath, "\nplease edit ", configPath, " and set musicDirectoryPath to a directory containing your music files.")
+        loadSuccess = false
+        return
+    }
+
+
+    clientSitePath = file.getAbsolutePath(katipo.sitePath + "/clientSite")
+    if(!file.fileExists(clientSitePath))
+    {
+        print("ERROR: missing publicData directory:", clientSitePath)
+        loadSuccess = false
+        return
     }
 
     #print("loaded directory tree:", directoryTree)

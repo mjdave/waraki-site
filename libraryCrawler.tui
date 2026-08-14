@@ -130,6 +130,30 @@ loadFile = function(path, fileName, localPath)
                         songID = songID
                     }
 
+                    if(scanForLyrics)
+                    {
+                        baseFileName = file.removeExtension(path)
+                        firstPNGFile = baseFileName + "-1.png"
+                        if(file.fileExists(firstPNGFile))
+                        {
+                            print("found lyrics")
+                            pageCount = 1
+                            for(i=2,i<16,i++)
+                            {
+                                thisPNGFile = baseFileName + "-" + i + ".png"
+                                if(file.fileExists(firstPNGFile))
+                                {
+                                    pageCount++
+                                }
+                                else
+                                {
+                                    break
+                                }
+                            }
+                            fileToAdd.lyricsPageCount = pageCount
+                        }
+                    }
+
                     if(fileCount % 10 == 0)
                     {
                         print("found ", fileCount, " files. latest:", pathToUse)

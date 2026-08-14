@@ -96,6 +96,16 @@ getSongCallback = function(result, hostID)
 
         statusSubtitleTextView.text = " "
         statusDownloadProgress.hidden = true
+
+        lyricsButton = scene.getView("lyricsButton")
+        if(songInfo.lyricsPageCount and songInfo.lyricsPageCount > 0)
+        {
+            lyricsButton.hidden = false
+        }
+        else
+        {
+            lyricsButton.hidden = true
+        }
         
         if(downloadInfo.playWhenDone)
         {

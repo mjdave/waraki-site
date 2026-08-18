@@ -294,6 +294,23 @@ editPlaylistContent = {
     }
 }
 
+lyricsContent = {
+    id = "lyricsContent"
+    hidden = true
+    type = "view"
+    subviews = {
+        {
+            id = "lyricsBackground"
+            type = "color"
+            color = vec4(1.0,1.0,1.0,0.95)
+        }
+        {
+            id = "lyricsContentScrollView"
+            type = "scrollView"
+        }
+    }
+}
+
 
 addSongContent = {
     id = "addSongContent"
@@ -325,6 +342,7 @@ mainView = {
                 settingsUI.helpContent
                 editPlaylistContent
                 addSongContent
+                lyricsContent
             }
         }
         playbackTimeline

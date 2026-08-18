@@ -65,10 +65,10 @@ if(!loadedConfig)
 
 musicDirectoryPath = loadedConfig.musicDirectoryPath #note:accessed by C++
 doCrawlOnLaunch = loadedConfig.doCrawlOnLaunch
-convertM4AToMP3 = loadedConfig.convertM4AToMP3 #used by dave, not really for public use but you could get it working
+convertM4AToMP3 = loadedConfig.convertM4AToMP3 #experimental feature used by dave, not really for public use but you could get it working
 importM3UPlaylists = loadedConfig.importM3UPlaylists
 recrawlFrequencySeconds = loadedConfig.recrawlFrequencySeconds
-scanForLyrics = loadedConfig.scanForLyrics
+scanForLyrics = loadedConfig.scanForLyrics #experimental feature
 
 songServerInfosBySongID = {}
 directoryTree = {}
@@ -139,58 +139,6 @@ doCrawl = function()
     }
     .songServerInfosBySongID = libraryCrawler.songServerInfosBySongID
     .directoryTree = libraryCrawler.directoryTree
-
-    #todo this is all hackery for backwards compatibility, can be removed later
-    #if(convertM4AToMP3)
-    #{
-    #    for(playlistID, playlist in sharedPlaylists)
-    #    {
-    #        for(song in playlist.songs)
-    #        {
-    #            if(!songServerInfosBySongID[song.songID])
-    #            {
-    #                print("no song info:", song)
-    #                extension = file.extension(song.fileName)
-    #                if(extension == ".mp3")
-    #                {
-    #                    #localM4AFilename = file.changeExtension(song.localPath, "m4a")
-    #                    #fullM4APath = musicDirectoryPath + "/" + localM4AFilename
-    #                    #print("fullM4APath:", fullM4APath)
-    #                    fullPath = musicDirectoryPath + "/" + song.localPath
-    #                    newSongID = string.sha1(fullPath)
-#
-    #                    if(songServerInfosBySongID[newSongID])
-    #                    {
-    #                        song.songID = newSongID
-    #                    }
-    #                    else
-    #                    {
-    #                        print("Song not found:", song.localPath)
-    #                    }
-    #                }
-    #                else if(extension == ".ogg")
-    #                {
-    #                    mp3LocalPath = file.changeExtension(song.localPath, "mp3")
-    #                    fullPath = musicDirectoryPath + "/" + mp3LocalPath
-    #                    if(file.fileExists(fullPath))
-    #                    {
-    #                        newSongID = string.sha1(fullPath)
-    #                        if(songServerInfosBySongID[newSongID])
-    #                        {
-    #                            song.songID = newSongID
-    #                            song.localPath = mp3LocalPath
-    #                            song.fileName = file.changeExtension(song.fileName, "mp3")
-    #                        }
-    #                        else
-    #                        {
-    #                            print("Song not found:", song.localPath)
-    #                        }
-    #                    }
-    #                }
-    #            }
-    #        }
-    #    }
-    #}
 
     host.setPublicData("directoryTree", directoryTree)
     host.setPublicData("sharedPlaylists", sharedPlaylists)
@@ -266,6 +214,44 @@ get = function(url, clientData)
                 message = "file not found"
             }
         }
+    }
+    else if(urlSplit[0] == "images") #waraki/images/songID/imageIndex
+    {
+        print("got image request:", urlSplit)
+        if(table.count(urlSplit) >= 3)
+        {
+            songID = urlSplit[1]
+            imageIndex = urlSplit[2]
+            songInfo = songServerInfosBySongID[songID]
+            if(imageIndex and songInfo and songInfo.lyricsPageCount > imageIndex)
+            {
+            
+                baseFileName = file.removeExtension(songInfo.fileName)
+                pngFileName = baseFileName + "-" + imageIndex + ".png"
+
+                pngFilePath = musicDirectoryPath + "/" + pngFileName
+
+                print("pngFilePath:", pngFilePath)
+                
+                if(file.fileExists(pngFilePath))
+                {
+                    print("file exists. sending...")
+                    return {
+                        status = "ok"
+                        songID = songID
+                        lyricsPageCount = songInfo.lyricsPageCount
+                        fileName = pngFileName
+                        filePath = pngFilePath #internally, katipo looks for filePath and will replace this with the contents of the file. todo should probably just send the data here instead
+                    }
+                }
+            }
+        }
+        
+        return {
+            status = "error"
+            message = "file not found"
+        }
+            
     }
 
     return {
@@ -344,5 +330,3 @@ init = function() #called just after katipo.init. The database is now ready to u
         doCrawl()
     }
 }
-
-print("got to end of load:", loadSuccess)

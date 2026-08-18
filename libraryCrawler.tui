@@ -118,11 +118,13 @@ loadFile = function(path, fileName, localPath)
                 if(extension == ".m4a" or extension == ".mp3" or extension == ".flac" or extension == ".ogg")
                 {
                     songID = string.sha1(pathToUse)
-                    songServerInfosBySongID[songID] = {
+                    songInfo = {
                         fileName = fileName
                         path = pathToUse
                         localPath = localPath
                     }
+
+                    songServerInfosBySongID[songID] = songInfo
                     
                     fileToAdd = {
                         fileName = fileName
@@ -132,6 +134,7 @@ loadFile = function(path, fileName, localPath)
 
                     if(scanForLyrics)
                     {
+                            print("scanForLyrics")
                         baseFileName = file.removeExtension(path)
                         firstPNGFile = baseFileName + "-1.png"
                         if(file.fileExists(firstPNGFile))
@@ -150,7 +153,7 @@ loadFile = function(path, fileName, localPath)
                                     break
                                 }
                             }
-                            fileToAdd.lyricsPageCount = pageCount
+                            songInfo.lyricsPageCount = pageCount
                         }
                     }
 
@@ -232,6 +235,7 @@ addm3uPlaylists = function()
                             songID = songID,
                             fileName = songInfo.fileName
                             localPath = songInfo.localPath
+                            lyricsPageCount = songInfo.lyricsPageCount
                         }
                         table.insert(foundSongs, clientPlaylistSongInfo)
                     }

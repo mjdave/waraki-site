@@ -1,4 +1,3 @@
-songsCachePath = file.getSavePath("files/songs/")
 
 fileBrowser = scene.viewTypes.fileBrowser
 
@@ -11,6 +10,7 @@ shuffleDisabled = false
 addSongFileBrowser = false #means nil
 playlistTitleTextEntry = false
 
+checkForLyrics = true
 
 searchButton = scene.getView("searchButton")
 searchTextEntry = scene.getView("searchTextEntry")
@@ -42,7 +42,7 @@ searchTextEntry.setOnFinishedEditing(function(textValue, changesMade)
 
 searchTextEntry.setOnTextChanged(function(textValue)
 {
-    print("searchText:", textValue)
+    #print("searchText:", textValue)
 })
 
 searchButton.click = function()
@@ -118,12 +118,59 @@ updateReorderButtonsHidden = function()
     }
 }
 
+
+updateLyricsButtonHiddenForSongSelection = function(songInfo)
+{
+    print("updateLyricsButtonHiddenForSongSelection:", songInfo)
+    lyricsButton = scene.getView("lyricsButton")
+
+    imageIndex = 1
+
+    baseFileName = file.removeExtension(songInfo.localPath)
+    pngFileName = baseFileName + "-" + imageIndex + ".png"
+    pngFilePath = delegate.getFullSongPath(pngFileName)
+
+    #print("pngFilePath:", pngFilePath)
+
+    if(file.fileExists(pngFilePath))
+    {
+        lyricsButton.hidden = false
+        
+        lyricsClick = function()
+        {
+            editPlaylistContent = scene.getView("editPlaylistContent")
+            editPlaylistContent.hidden = true
+
+            lyricsContent = scene.getView("lyricsContent")
+            lyricsContent.hidden = false #todo hide again
+
+            imageViewLayout = {
+                type = "image"
+                crop = false
+                absolutePath = pngFilePath
+                parentWidthFraction = 1.0
+            }
+
+            lyricsContentScrollView = lyricsContent.getView("lyricsContentScrollView")
+
+            imageView = lyricsContentScrollView.addView(imageViewLayout)
+        }
+
+        lyricsButton.click = lyricsClick
+    }
+    else
+    {
+        lyricsButton.hidden = true
+        #todo download if songInfo.lyricsPageCount
+    }
+}
+
 playingSongChanged = function()
 {
     .currentPreviewPlayingSongURL = audio.currentTrackPath()
     if(currentPreviewPlayingSongURL and currentPreviewPlayingSongURL != "")
     {
-        print("playingSongChanged:", currentPreviewPlayingSongURL)
+        #print("playingSongChanged:", currentPreviewPlayingSongURL)
         if(currentPreviewPlayingItemView)
         {
             backgroundButtonView = currentPreviewPlayingItemView.getView("playlistSongItemBackground")
@@ -138,13 +185,14 @@ playingSongChanged = function()
         {
             rowInfo = playlistScrollView.rowInfos[i]
             itemView = rowInfo.rowView
-            print("itemView:", itemView)
+            #print("itemView:", itemView)
             if(currentPreviewPlayingSongURL == itemView.songFullURL)
             {
-                print("found")
+                #print("found")
                 backgroundButtonView = itemView.getView("playlistSongItemBackground")
                 backgroundButtonView.setSelected(true)
                 .currentPreviewPlayingItemView = itemView
+                updateLyricsButtonHiddenForSongSelection(itemView.songInfo)
                 break
             }
         }
@@ -165,6 +213,7 @@ playPreview = function(itemView)
 {
     clearAnyCurrentPlayingSelection()
     .currentPreviewPlayingItemView = itemView
+    updateLyricsButtonHiddenForSongSelection(itemView.songInfo)
 
     backgroundButtonView = currentPreviewPlayingItemView.getView("playlistSongItemBackground")
     backgroundButtonView.setSelected(true)
@@ -403,11 +452,13 @@ onMainPlaylistItemCreate = function(itemView, index)
         }
 
         itemView.songFullURL = delegate.getFullSongPath(itemView.fileInfo.localPath)
+        itemView.songInfo = itemView.fileInfo
 
         if(currentPreviewPlayingSongURL == itemView.songFullURL)
         {
             backgroundButtonView.setSelected(true)
             .currentPreviewPlayingItemView = itemView
+            updateLyricsButtonHiddenForSongSelection(itemView.songInfo)
         }
 
         updateVisualsForThisItem()

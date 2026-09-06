@@ -1,4 +1,6 @@
-
+#global scanForLyrics
+#global convertM4AToMP3
+#global importM3UPlaylists
 
 fileCount = 0
 m3uPlaylistInfosByPlaylistID = {}

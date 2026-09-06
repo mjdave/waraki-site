@@ -1,6 +1,9 @@
 # code.tui
 # this is run on the host, it handles get requests, as well as crawling for music
 
+#global katipo
+#global database
+
 siteInfo = require(katipo.sitePath + "/site.tui")
 host = katipo.host
 
@@ -11,6 +14,54 @@ print("loading config at path:", configPath)
 
 incomingMusicLibraryPath = false
 loadedConfig = false
+
+sharedPlaylists = false
+songServerInfosBySongID = false
+
+exportPlaylists = function()
+{
+    playlistsExportDir = musicDirectoryPath + "/PlaylistsExported/"
+    file.createDirectoriesIfNeededForDirPath(playlistsExportDir)
+    print("playlistsExportDir:", playlistsExportDir)
+    for(playlistID, playlist in sharedPlaylists)
+    {
+        #playlistName = playlist.name
+        m3uString = "#EXTM3U\n"
+        for(song in playlist.songs)
+        {
+            serverInfo = songServerInfosBySongID[song.songID]
+            path = serverInfo.path
+
+            duration = -1
+            durationKey = "duration_" + song.songID
+            if(database.has(durationKey))
+            {
+                duration = database.get(durationKey)
+            }
+            else
+            {
+                command = "ffprobe -i \"" + path + "\" -show_entries format=duration -v quiet -of csv='p=0'"
+                print("running:", command)
+                duration = exec(command)
+                decimalLocation = string.find(duration, ".")
+                if(decimalLocation)
+                {
+                    durationIntString = string.subString(duration, 0, decimalLocation)
+                    database.set(durationKey, durationIntString)
+
+                    print("found:", path, " durationIntString:", durationIntString)
+                }
+            }
+
+
+            m3uString += "#EXTINF:" + duration + "," + song.fileName + "\n"
+            m3uString += "../" + serverInfo.localPath + "\n"
+        }
+        playlistPath = playlistsExportDir + playlist.name + ".m3u"
+        file.saveData(playlistPath, m3uString)
+        print("saved playlist:", playlistPath)
+    }
+}
 
 if(katipo.userConfiguration) #this might be too much of an assumption
 {
@@ -65,6 +116,7 @@ if(!loadedConfig)
 
 musicDirectoryPath = loadedConfig.musicDirectoryPath #note:accessed by C++
 doCrawlOnLaunch = loadedConfig.doCrawlOnLaunch
+exportPlaylistsOnLaunch = loadedConfig.exportPlaylistsOnLaunch
 convertM4AToMP3 = loadedConfig.convertM4AToMP3 #experimental feature used by dave, not really for public use but you could get it working
 importM3UPlaylists = loadedConfig.importM3UPlaylists
 recrawlFrequencySeconds = loadedConfig.recrawlFrequencySeconds
@@ -328,5 +380,10 @@ init = function() #called just after katipo.init. The database is now ready to u
     if(doCrawlOnLaunch or !directoryTree)
     {
         doCrawl()
+    }
+
+    if(exportPlaylistsOnLaunch)
+    {
+        exportPlaylists()
     }
 }

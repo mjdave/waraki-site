@@ -312,6 +312,19 @@ lyricsContent = {
 }
 
 
+sonosSelectSpeakerContent = {
+    id = "sonosSelectSpeakerContent"
+    hidden = true
+    type = "view"
+    alignmentY = "bottom"
+    subviews = {
+        {
+            id = "sonosSelectSpeakerScrollView"
+            type = "scrollView"
+        }
+    }
+}
+
 addSongContent = {
     id = "addSongContent"
     type = "fileBrowser"
@@ -343,6 +356,7 @@ mainView = {
                 editPlaylistContent
                 addSongContent
                 lyricsContent
+                sonosSelectSpeakerContent
             }
         }
         playbackTimeline
@@ -427,6 +441,26 @@ mainView = {
                     size = vec2(40,40)
                     alignmentY = "top"
                     hidden = true
+                }
+                {
+                    id = "sonosButton"
+                    type = "button"
+                    buttonType = "imageHueShift"
+                    path = "images/up.png"
+                    pos = vec3(-5, -5, 0)
+                    size = vec2(40,40)
+                    alignmentY = "top"
+                    alignmentX = "right"
+                    hidden = true
+                }
+                {
+                    id = "sonosCurrentDeviceText"
+                    type = "text"
+                    font = "roboto"
+                    fontSize = 14
+                    alignmentY = "top"
+                    alignmentX = "right"
+                    pos = vec3(-5, -50, 0)
                 }
                 
 

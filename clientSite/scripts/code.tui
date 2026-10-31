@@ -1,6 +1,8 @@
-# clientSite/scripts/code.tui
-# this code is downloaded by the client when they first connect and is run on the client browser. It is the entirety of the waraki client "app"
-# It handles the user interface and all client interactions, as well as requesting music from the host
+#global katipo
+#global scene
+#global audio
+#global database
+#global eventManager
 
 keys = require("app/common/keys.tui")
 editPlaylistUI = require("scripts/editPlaylistUI.tui")
@@ -145,7 +147,7 @@ checkForNextFileAndDownloadIfNeeded = function()
     statusDownloadProgress.progress = 0
     statusDownloadProgress.onParentSizeChanged = function(parentSize)
     {
-`       return vec2((0.01 + 0.99 * statusDownloadProgress.progress) * parentSize.x, progressBarHeight)
+        return vec2((0.01 + 0.99 * statusDownloadProgress.progress) * parentSize.x, progressBarHeight)
     }
 
     
@@ -505,7 +507,14 @@ pitchDownButton.click = pitchDownButtonClick
 
 skipToNextTrack = function()
 {
-    audio.next()
+    if(currentSonosRoomName)
+    {
+
+    }
+    else
+    {
+        audio.next()
+    }
 }
 
 nextButton.click = skipToNextTrack
@@ -547,6 +556,23 @@ playSelectedPlaylist = function()
         {
             return
         }
+    }
+
+    if(currentSonosRoomName)
+    {
+        playSonosPlaylistCallback = function(result)
+        {
+            print("in callback:", result)
+        }
+
+        .selectedPlaylist = selectedPlaylistView.playlist
+        playInfo = {
+            roomName = currentSonosRoomName
+            playlistID = selectedPlaylist.playlistID
+        }
+        katipo.get("playSonosPlaylist", playInfo, playSonosPlaylistCallback)
+        
+        return
     }
 
     if(selectedPlaylist == selectedPlaylistView.playlist)
@@ -762,6 +788,119 @@ savePlaylist = function(serverPlaylistInfo)
     katipo.get("savePlaylist", serverPlaylistInfo, saveCallback)
 }
 
+initSonos = function(sonosSpeakerNames)
+{
+    if(sonosSpeakerNames and table.count(sonosSpeakerNames) > 0)
+    {
+        sonosButton = scene.getView("sonosButton")
+        sonosButton.hidden = false
+
+        rowSize = 30
+            
+        sonosButtonClick = function()
+        {
+            sonosSelectSpeakerContent = scene.getView("sonosSelectSpeakerContent")
+            if(!sonosSelectSpeakerContent.hidden)
+            {
+                sonosSelectSpeakerContent.hidden = true
+            }
+            else
+            {
+                sonosSelectSpeakerContent.hidden = false
+                if(!sonosSelectSpeakerContent.selectedSonosRoomRowView)
+                {
+                    speakerItemViewLayout = {
+                        type = "button"
+                        buttonType = "color"
+                        alignmentY = "top"
+                        alignmentX = "right"
+                        color = vec4(0,0,0,0.5)
+                        selectedColor = vec4(0.6,0.3,0.0,0.5)
+                        onParentSizeChanged = function(parentSize)
+                        {
+                            return vec2(parentSize.x, rowSize)
+                        }
+                        subviews = {
+                            {
+                                id = "text"
+                                type = "text"
+                                text = "hello"
+                                alignmentX = "right"
+                                pos = vec2(-25,0)
+                                font = "roboto"
+                                fontSize = 14
+                            }
+                        }
+                    }
+
+                    sonosSelectSpeakerScrollView = sonosSelectSpeakerContent.getView("sonosSelectSpeakerScrollView")
+
+                    selectDevice = function(speakerView, name)
+                    {
+                        sonosSelectSpeakerContent.selectedSonosRoomRowView.setSelected(false)
+                        selectedSonosRoomRowView = speakerView
+                        speakerView.setSelected(true)
+                        sonosSelectSpeakerContent.selectedSonosRoomRowView = selectedSonosRoomRowView
+
+                        if(name == "This Device")
+                        {
+                            .currentSonosRoomName = nil
+                        }
+                        else
+                        {
+                            .currentSonosRoomName = name
+                        }
+                        sonosSelectSpeakerContent.hidden = true
+                        sonosCurrentDeviceText = scene.getView("sonosCurrentDeviceText")
+                        sonosCurrentDeviceText.text = name
+                        #todo update currently playing state
+                    }
+
+                    addRow = function(rowIndex, name)
+                    {
+                        if(rowIndex % 2 == 0)
+                        {
+                            speakerItemViewLayout.color = vec4(0.1,0.1,0.1,0.2)
+                        }
+                        else
+                        {
+                            speakerItemViewLayout.color = vec4(0.0,0.0,0.0,0.2)
+                        }
+                        speakerItemViewLayout.pos = vec2(0, -rowIndex * rowSize)
+                        speakerView = sonosSelectSpeakerScrollView.addView(speakerItemViewLayout)
+                        textView = speakerView.getView("text")
+                        textView.text = name
+
+                        clickFunction = function()
+                        {
+                            selectDevice(speakerView, name)
+                        }
+                        speakerView.setClickFunction(clickFunction)
+
+                        return speakerView
+                    }
+
+                    selectedSonosRoomRowView = addRow(0, "This Device")
+                    selectedSonosRoomRowView.setSelected(true)
+                    sonosSelectSpeakerContent.selectedSonosRoomRowView = selectedSonosRoomRowView
+
+                    for(i, name in sonosSpeakerNames)
+                    {
+                        addRow(i + 1, name)
+                    }
+
+                    sonosSelectSpeakerContent.onParentSizeChanged = function(parentSize)
+                    {
+                        return vec2(parentSize.x, (table.count(sonosSpeakerNames) + 1) * rowSize)
+                    }
+                }
+            }
+        }
+
+    }
+
+    sonosButton.click = sonosButtonClick
+}
 
 editPlaylistUI.delegate = { #expose public functions to editPlaylistUI via "delegate"
     playPreview = playPreview
@@ -781,6 +920,11 @@ katipo.onSiteLoad = function(wasNewDownload, publicData) #wasNewDownload if we j
         .directoryTree = publicData.directoryTree
         database.set("sharedPlaylists", sharedPlaylistsByPlaylistID)
         database.set("directoryTree", directoryTree)
+
+        if(publicData.sonosSpeakerNames)
+        {
+            initSonos(publicData.sonosSpeakerNames)
+        }
     }
     else
     {

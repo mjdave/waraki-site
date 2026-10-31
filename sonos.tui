@@ -1,0 +1,242 @@
+#global http
+#global katipo
+
+if(!http)
+{
+    return
+}
+
+speakerInfosByName = false
+speakerNames = {}
+
+checkInitialized = function()
+{
+    if(!speakerInfosByName)
+    {
+        error("sonos.tui not initialized")
+        return false
+    }
+    return true
+}
+
+getQuery = function(actionName, extraInfo)
+{
+    result = "<u:" + actionName + " xmlns:u=\"urn:schemas-upnp-org:service:AVTransport:1\"><InstanceID>0</InstanceID>"
+    if(actionName == "Play")
+    {
+        result += "<Speed>1</Speed>\n"
+    }
+    else if(actionName == "SetAVTransportURI")
+    {
+        result += "<CurrentURI>x-rincon-queue:" + extraInfo + "#0</CurrentURI>\n"
+        result += "<CurrentURIMetaData></CurrentURIMetaData>\n"
+        /*<u:SetAVTransportURI xmlns:u="urn:schemas-upnp-org:service:AVTransport:1">
+  <InstanceID>ui4</InstanceID>
+  <CurrentURI>string</CurrentURI>
+  <CurrentURIMetaData>string</CurrentURIMetaData>
+</u:SetAVTransportURI>*/
+    }
+    else if(actionName == "AddURIToQueue")
+    {
+        result += "<EnqueuedURI>" + extraInfo + "</EnqueuedURI>\n"
+        result += "<DesiredFirstTrackNumberEnqueued>0</DesiredFirstTrackNumberEnqueued>\n"
+        result += "<EnqueuedURIMetaData></EnqueuedURIMetaData>\n"
+        result += "<EnqueueAsNext>1</EnqueueAsNext>\n"
+    }
+    else if(actionName == "AddMultipleURIsToQueue")
+    {
+
+/*
+<u:AddMultipleURIsToQueue xmlns:u="urn:schemas-upnp-org:service:AVTransport:1">
+  <UpdateID>ui4</UpdateID>
+  <NumberOfURIs>ui4</NumberOfURIs>
+  <EnqueuedURIs>string</EnqueuedURIs>
+  <EnqueuedURIsMetaData>string</EnqueuedURIsMetaData>
+  <ContainerURI>string</ContainerURI>
+  <ContainerMetaData>string</ContainerMetaData>
+  <DesiredFirstTrackNumberEnqueued>ui4</DesiredFirstTrackNumberEnqueued>
+  <EnqueueAsNext>boolean</EnqueueAsNext>
+</u:AddMultipleURIsToQueue>
+*/
+        result += "<UpdateID>0</UpdateID>\n"
+        result += "<ContainerURI></ContainerURI>\n"
+        result += "<ContainerMetaData></ContainerMetaData>\n"
+        result += "<NumberOfURIs>" + 1 + "</NumberOfURIs>\n"
+        result += "<EnqueuedURIs>" + extraInfo[0] + "</EnqueuedURIs>\n"
+        result += "<DesiredFirstTrackNumberEnqueued>0</DesiredFirstTrackNumberEnqueued>\n"
+        result += "<EnqueuedURIsMetaData></EnqueuedURIsMetaData>\n"
+        result += "<EnqueueAsNext>1</EnqueueAsNext>\n"
+    }
+    
+    result += "</u:" + actionName + ">"
+    print("result:", result)
+    return result
+}
+
+getBody = function(actionName, extraInfo)
+{
+    query = getQuery(actionName, extraInfo)
+    result = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+    <s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">
+      <s:Body>
+    " + query + "
+    </s:Body>
+    </s:Envelope>"
+    return result
+}
+
+getHeader = function(actionName)
+{
+    return "Content-Type:text/xml; Charset=UTF-8\r
+soapaction: urn:schemas-upnp-org:service:AVTransport:1#" + actionName
+}
+
+callSonosFunction = function(roomName, actionName, extraInfo)
+{
+    if(!checkInitialized())
+    {
+        return
+    }
+
+    speakerInfo = speakerInfosByName[roomName]
+    if(!speakerInfo)
+    {
+        error("no speaker named:" + roomName)
+    }
+
+    header = getHeader(actionName)
+    body = getBody(actionName, extraInfo)
+
+    callback = function(result)
+    {
+        print(actionName, " got result:" result)
+    }
+
+    http.post(speakerInfo.ip + ":1400/MediaRenderer/AVTransport/Control", header, body, callback)
+}
+
+urlReplacements = {
+ " " = "%20"
+}
+
+htmlEscape = function(inString)
+{
+    outSting = ""
+    charFunction = function(char)
+    {
+        replacement = urlReplacements[char]
+        if(replacement)
+        {
+            outSting += replacement
+        }
+        else
+        {
+            outSting += char
+        }
+    }
+    string.eachChar(inString, charFunction)
+    return outSting
+}
+
+
+play = function(roomName, songList)
+{
+    print("sonos got play for room:", roomName, " songList:", songList)
+
+    #localPath = songList[0].localPath
+    #uri = "x-file-cifs%3a%2f%2fblue%2fmusic%2fEagles%2f1976%2520-%2520Their%2520Greatest%2520Hits%25201971-1975%2f02.%2520Witchy%2520Woman.flac"
+    #uri = ("x-file-cifs://blue/music/Ann%20Lee/Unknown%20Album/2%20Times.mp3")
+    #uris = {uri}
+    #getPositionInfo(roomName)
+    callSonosFunction(roomName, "SetAVTransportURI", speakerInfosByName[roomName].uuid)
+    callSonosFunction(roomName, "RemoveAllTracksFromQueue")
+    #callSonosFunction(roomName, "AddURIToQueue", uri)
+    #callSonosFunction(roomName, "AddMultipleURIsToQueue", uris)
+
+    //for(song in songList)
+    //{
+    song = songList[1]
+        uri = "x-file-cifs://blue/music/" + song.localPath
+        print("uri:", uri)
+        callSonosFunction(roomName, "AddURIToQueue", uri)
+        break
+    //}
+    
+    callSonosFunction(roomName, "Play")
+}
+
+pause = function(roomName)
+{
+    callSonosFunction(roomName, "Pause")
+}
+
+getMediaInfo = function(roomName)
+{
+    callSonosFunction(roomName, "GetMediaInfo")
+}
+
+getTransportInfo = function(roomName)
+{
+    callSonosFunction(roomName, "GetTransportInfo")
+}
+
+getMediaInfo = function(roomName)
+{
+    callSonosFunction(roomName, "GetMediaInfo")
+}
+
+getPositionInfo = function(roomName)
+{
+    callSonosFunction(roomName, "GetPositionInfo")
+}
+
+
+debugMode = true
+
+findSpeakers = function(subNet)
+{
+    if(debugMode)
+    {
+        .speakerNames = katipo.host.getPublicData("sonosSpeakerNames")
+        .speakerInfosByName = katipo.host.getPublicData("speakerInfosByName")
+        print("speakers:", speakerInfosByName)
+        print("speakerNames:", speakerNames)
+    }
+    else
+    {
+        .speakerInfosByName = {}
+        katipo.host.setPublicData("sonosSpeakerNames", nil)
+
+        for(i = 2, i < 255, i++)
+        {
+            speakerIP = subNet + i
+            callback = function(result)
+            {
+                roomName = string.findBetween(result, "<roomName>", "</roomName>")
+                if(roomName)
+                {
+                    uuid = string.findBetween(result, "<UDN>uuid:", "</UDN>")
+                    print(speakerIP + " found room:" string.lower(roomName), " uuid:", uuid)
+                    if(!speakerInfosByName[roomName])
+                    {
+                        table.insert(speakerNames, roomName)
+                    }
+                    speakerInfosByName[roomName] = {
+                        ip = speakerIP
+                        uuid = uuid
+                    }
+
+                    katipo.host.setPublicData("sonosSpeakerNames", speakerNames)
+                    katipo.host.setPublicData("speakerInfosByName", speakerInfosByName)
+
+                    print("speakerNames:", speakerNames)
+                    print("speakerInfosByName:", speakerInfosByName)
+                }
+            }
+
+            http.get(speakerIP + ":1400/xml/device_description.xml", callback)
+        }
+
+    }
+    
+}

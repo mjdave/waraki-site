@@ -1,3 +1,7 @@
+#global scene
+#global audio
+#global delegate
+#global database
 
 fileBrowser = scene.viewTypes.fileBrowser
 
@@ -317,21 +321,29 @@ toggleSongAddedToPlaylist = function(buttonView, songInfo, backgroundView, updat
 
 onBrowserItemCreate = function(itemView, index)
 {
+        #print("onBrowserItemCreate:", itemView)
     addButtonView = itemView.getView("addButton")
     if(addButtonView) #existance proves this is a file, not a directory we are clicking on
     {
         backgroundView = itemView.getView("fileItemBackground")
         backgroundViewClickFunction = function()
         {
+            #print("hello 2")
             playFileBrowserPreview(itemView)
         }
 
         backgroundView.setClickFunction(backgroundViewClickFunction)
 
-        addButtonView.click = function()
+        #print("backgroundView:", backgroundView)
+
+        addButtonClickFunction = function()
         {
+            #print("addButtonClickFunction")
             toggleSongAddedToPlaylist(addButtonView, itemView.fileInfo, backgroundView, true)
         }
+
+            #print("setting click function:")
+        addButtonView.setClickFunction(addButtonClickFunction)
         addButtonView.setHueOffset(-0.1 * itemView.rowIndex)
 
         highlight = false
@@ -408,15 +420,16 @@ onMainPlaylistItemCreate = function(itemView, index)
             }
         }
 
-        addButtonView.click = function()
+        addButtonViewClickFunction = function()
         {
             toggleSongAddedToPlaylist(addButtonView, itemView.fileInfo, backgroundButtonView, false)
             updateVisualsForThisItem()
         }
+        addButtonView.setClickFunction(addButtonViewClickFunction)
         addButtonView.setHueOffset(-0.1 * itemView.rowIndex)
 
         moveUpButton = itemView.getView("moveUpButton")
-        moveUpButton.click = function()
+        moveUpButtonClickFunction = function()
         {
             prevInfo = playlistContent[itemView.rowIndex]
             table.remove(playlistContent, itemView.rowIndex)
@@ -428,10 +441,11 @@ onMainPlaylistItemCreate = function(itemView, index)
             playlistScrollView.moveRow(itemView.rowIndex, itemView.rowIndex - 1)
             updateReorderButtonsHidden()
         }
+        moveUpButton.setClickFunction(moveUpButtonClickFunction)
         moveUpButton.setHueOffset(-0.1 * itemView.rowIndex - 0.1)
 
         moveDownButton = itemView.getView("moveDownButton")
-        moveDownButton.click = function()
+        moveDownButtonClickFunction = function()
         {
             prevInfo = playlistContent[itemView.rowIndex]
             table.remove(playlistContent, itemView.rowIndex)
@@ -443,13 +457,15 @@ onMainPlaylistItemCreate = function(itemView, index)
             playlistScrollView.moveRow(itemView.rowIndex, itemView.rowIndex + 1)
             updateReorderButtonsHidden()
         }
+        moveDownButton.setClickFunction(moveDownButtonClickFunction)
         moveDownButton.setHueOffset(-0.1 * itemView.rowIndex - 0.2)
 
 
-        backgroundButtonView.click = function()
+        backgroundButtonViewClickFunction = function()
         {
             playPreview(itemView)
         }
+        backgroundButtonView.setClickFunction(backgroundButtonViewClickFunction)
 
         itemView.songFullURL = delegate.getFullSongPath(itemView.fileInfo.localPath)
         itemView.songInfo = itemView.fileInfo
@@ -634,8 +650,6 @@ show = function(directoryTree, playlistOrNil)
 
     if(!addSongFileBrowser)
     {
-        fileBrowser.onBrowserItemCreate = onBrowserItemCreate
-        fileBrowser.onBrowserContentChange = onBrowserContentChange
 
         editPlaylistBackButton = scene.getView("editPlaylistBackButton")
         editPlaylistAddSongButton = scene.getView("editPlaylistAddSongButton")
@@ -644,6 +658,8 @@ show = function(directoryTree, playlistOrNil)
 
         addSongHeader = scene.getView("addSongHeader")
         .addSongFileBrowser = scene.getView("addSongContent")
+        addSongFileBrowser.onBrowserItemCreate = onBrowserItemCreate
+        addSongFileBrowser.onBrowserContentChange = onBrowserContentChange
 
         .addSongSubtitleText = addSongHeader.getView("addSongSubtitleText")
 
@@ -654,9 +670,9 @@ show = function(directoryTree, playlistOrNil)
 
         .playlistTitleTextEntry = scene.getView("playlistTitleTextEntry")
 
-        editPlaylistBackButton.click = delegate.backButtonClicked
+        editPlaylistBackButton.setClickFunction(delegate.backButtonClicked)
 
-        editPlaylistAddSongButton.click = function()
+        editPlaylistAddSongButtonClickFunction = function()
         {
             addSongHeader.hidden = false
             addSongFileBrowser.hidden = false
@@ -664,6 +680,7 @@ show = function(directoryTree, playlistOrNil)
             editPlaylistHeader.hidden = true
             editPlaylistContent.hidden = true
         }
+        editPlaylistAddSongButton.setClickFunction(editPlaylistAddSongButtonClickFunction)
 
         toggleDownloadButton.click = function()
         {
@@ -703,7 +720,7 @@ show = function(directoryTree, playlistOrNil)
         }
         
 
-        addSongBackButton.click = function()
+        addSongBackButtonClickFunction = function()
         {
             editPlaylistHeader.hidden = false
             editPlaylistContent.hidden = false
@@ -714,6 +731,8 @@ show = function(directoryTree, playlistOrNil)
             addSongHeader.hidden = true
             addSongFileBrowser.hidden = true
         }
+
+        addSongBackButton.setClickFunction(addSongBackButtonClickFunction)
 
         textChangeCallback = function(textValue, changesMade){
             if(changesMade and string.length(textValue) > 0 and playlistTitle != textValue)

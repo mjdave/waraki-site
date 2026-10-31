@@ -5,6 +5,8 @@
 #global database
 
 siteInfo = require(katipo.sitePath + "/site.tui")
+sonos = require(katipo.sitePath + "/sonos.tui")
+
 host = katipo.host
 
 loadSuccess = true
@@ -121,6 +123,7 @@ convertM4AToMP3 = loadedConfig.convertM4AToMP3 #experimental feature used by dav
 importM3UPlaylists = loadedConfig.importM3UPlaylists
 recrawlFrequencySeconds = loadedConfig.recrawlFrequencySeconds
 scanForLyrics = loadedConfig.scanForLyrics #experimental feature
+sonosSubnet = loadedConfig.sonosSubnet #experimental feature
 
 songServerInfosBySongID = {}
 directoryTree = {}
@@ -240,6 +243,18 @@ get = function(url, clientData)
             status = "ok"
         }
     }
+    else if(urlSplit[0] == "playSonosPlaylist")
+    {
+        playlistID = clientData.playlistID
+        roomName = clientData.roomName
+        playlist = sharedPlaylists[playlistID]
+
+        sonos.play(roomName, playlist.songs)
+        
+        return {
+            status = "ok"
+        }
+    }
     else if(table.count(urlSplit) <= 1) #respond to get fileHost/
     {
        return host.get(url, clientData)
@@ -338,6 +353,12 @@ init = function() #called just after katipo.init. The database is now ready to u
         .sharedPlaylists = {}
     }
 
+
+    if(sonosSubnet != nil)
+    {
+        sonos.findSpeakers(sonosSubnet)
+    }
+
     if(katipo.createSecurityBookmarkForDirectory) #this function is not always set, this is only for macos sandbox security
     {
         if(incomingMusicLibraryPath)
@@ -386,4 +407,7 @@ init = function() #called just after katipo.init. The database is now ready to u
     {
         exportPlaylists()
     }
+
+    #sonos.speakerIP = sonosIP
+    #sonos.pause()
 }

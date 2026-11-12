@@ -464,6 +464,15 @@ playPauseButtonClick = function()
     paused = .paused #tui bug
     if(paused)
     {
+        if(currentSonosRoomName)
+        {
+            pauseInfo = {
+                roomName = currentSonosRoomName
+                control = "pause"
+            }
+            katipo.get("sonosControl", pauseInfo)
+        }
+
         #print("pause stopping audio")
         audio.stop()
     }
@@ -562,6 +571,8 @@ playSelectedPlaylist = function()
     {
         playSonosPlaylistCallback = function(result)
         {
+            .paused = false
+            updatePauseButton()
             print("in callback:", result)
         }
 
@@ -790,6 +801,31 @@ savePlaylist = function(serverPlaylistInfo)
 
 initSonos = function(sonosSpeakerNames)
 {
+    volumeControls = scene.getView("volumeControls")
+    volumeControls.hidden = false
+
+    volumeUpButton = volumeControls.getView("volumeUpButton")
+    volumeUp = function()
+    {
+        playInfo = {
+            roomName = currentSonosRoomName
+            control = "volumeUp"
+        }
+        katipo.get("sonosControl", playInfo)
+    }
+    volumeUpButton.setClickFunction(volumeUp)
+
+    volumeDownButton = volumeControls.getView("volumeDownButton")
+    volumeDown = function()
+    {
+        playInfo = {
+            roomName = currentSonosRoomName
+            control = "volumeDown"
+        }
+        katipo.get("sonosControl", playInfo)
+    }
+    volumeDownButton.setClickFunction(volumeDown)
+
     if(sonosSpeakerNames and table.count(sonosSpeakerNames) > 0)
     {
         sonosButton = scene.getView("sonosButton")

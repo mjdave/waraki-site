@@ -3,8 +3,57 @@
 
 if(!http)
 {
+    error("Sonos support requires that katipoHost is built with KATIPO_COMPILE_WITH_HTTP_INTERFACE")
     return
 }
+
+/*
+POST /MediaRenderer/RenderingControl/Control
+Host: 192.168.x.x:1400
+soapaction: "urn:schemas-upnp-org:service:RenderingControl:1#{ActionName}"
+Content-Type: text/xml; charset="utf-8"
+
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+  <s:Body>
+    {ActionBodyHere}
+  </s:Body>
+</s:Envelope>
+
+-----
+
+<u:GetVolume xmlns:u="urn:schemas-upnp-org:service:RenderingControl:1">
+<InstanceID>0</InstanceID>
+<Channel>Master</Channel>
+</u:GetVolume>
+header:
+
+Content-Type:text/xml; Charset=UTF-8
+    soapaction: urn:schemas-upnp-org:service:RenderingControl:1#GetVolume
+
+body:
+
+<?xml version="1.0" encoding="utf-8"?>
+    <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+      <s:Body>
+
+<u:GetVolume xmlns:u="urn:schemas-upnp-org:service:RenderingControl:1">
+<InstanceID>0</InstanceID>
+<Channel>Master</Channel>
+</u:GetVolume>
+
+    </s:Body>
+    </s:Envelope>
+url:192.168.0.42:1400/MediaRenderer/RenderingControl/Control
+
+<u:GetVolume xmlns:u="urn:schemas-upnp-org:service:RenderingControl:1">
+  <InstanceID>ui4</InstanceID>
+  <Channel>string</Channel>
+</u:GetVolume>
+
+*/
+
+
 
 speakerInfosByName = false
 speakerNames = {}
@@ -22,6 +71,12 @@ checkInitialized = function()
 getQuery = function(actionName, extraInfo)
 {
     result = "<u:" + actionName + " xmlns:u=\"urn:schemas-upnp-org:service:AVTransport:1\"><InstanceID>0</InstanceID>"
+    if(actionName == "GetVolume")
+    {
+        result = "<u:" + actionName + " xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">\n<InstanceID>0</InstanceID>\n"
+        result += "<Channel>Master</Channel>\n"
+    }
+
     if(actionName == "Play")
     {
         result += "<Speed>1</Speed>\n"
@@ -87,11 +142,17 @@ getBody = function(actionName, extraInfo)
 
 getHeader = function(actionName)
 {
-    return "Content-Type:text/xml; Charset=UTF-8\r
-soapaction: urn:schemas-upnp-org:service:AVTransport:1#" + actionName
+    if(actionName == "GetVolume")
+    {
+        return "Content-Type:text/xml; Charset=\"utf-8\"\r
+soapaction: urn:schemas-upnp-org:service:RenderingControl:1#" + actionName + "\r"
+    }
+
+    return "Content-Type:text/xml; Charset=\"utf-8\"\r
+soapaction: urn:schemas-upnp-org:service:AVTransport:1#" + actionName + "\r"
 }
 
-callSonosFunction = function(roomName, actionName, extraInfo)
+callSonosFunction = function(roomName, actionName, extraInfo, callback)
 {
     if(!checkInitialized())
     {
@@ -107,16 +168,32 @@ callSonosFunction = function(roomName, actionName, extraInfo)
     header = getHeader(actionName)
     body = getBody(actionName, extraInfo)
 
-    callback = function(result)
+    callbackToUse = callback
+
+    if(!callback)
     {
-        print(actionName, " got result:" result)
+        callbackToUse = function(result)
+        {
+
+        }
     }
 
-    http.post(speakerInfo.ip + ":1400/MediaRenderer/AVTransport/Control", header, body, callback)
+    if(actionName == "GetVolume")
+    {
+        print("header:", header)
+        print("body:", body)
+        print("url:", speakerInfo.ip + ":1400/MediaRenderer/RenderingControl/Control")
+        http.post(speakerInfo.ip + ":1400/MediaRenderer/RenderingControl/Control", header, body, callbackToUse)
+    }
+    else
+    {
+        http.post(speakerInfo.ip + ":1400/MediaRenderer/AVTransport/Control", header, body, callbackToUse)
+    }
 }
 
 urlReplacements = {
  " " = "%20"
+ "&" = "%26"
 }
 
 htmlEscape = function(inString)
@@ -149,20 +226,29 @@ play = function(roomName, songList)
     #uris = {uri}
     #getPositionInfo(roomName)
     callSonosFunction(roomName, "SetAVTransportURI", speakerInfosByName[roomName].uuid)
-    callSonosFunction(roomName, "RemoveAllTracksFromQueue")
+    #sleep(1)
+    #sleep(1)
     #callSonosFunction(roomName, "AddURIToQueue", uri)
     #callSonosFunction(roomName, "AddMultipleURIsToQueue", uris)
 
-    //for(song in songList)
-    //{
-    song = songList[1]
-        uri = "x-file-cifs://blue/music/" + song.localPath
+    shuffled = table.clone(songList)
+    table.shuffle(shuffled)
+
+    callSonosFunction(roomName, "RemoveAllTracksFromQueue")
+    for(index,song in shuffled)
+    {
+        sleep(0.01)
+        uri = "x-file-cifs://blue/music/" + htmlEscape(song.localPath)
         print("uri:", uri)
         callSonosFunction(roomName, "AddURIToQueue", uri)
-        break
-    //}
+        if(index == 0)
+        {
+            sleep(0.01)
+            callSonosFunction(roomName, "Play")
+        }
+        #break
+    }
     
-    callSonosFunction(roomName, "Play")
 }
 
 pause = function(roomName)
@@ -188,6 +274,16 @@ getMediaInfo = function(roomName)
 getPositionInfo = function(roomName)
 {
     callSonosFunction(roomName, "GetPositionInfo")
+}
+
+addToVolume = function(roomName, amount)
+{
+   # callSonosFunction(roomName, "SetAVTransportURI", speakerInfosByName[roomName].uuid)
+    getCallback = function(result)
+    {
+        print("GetVolume got result:" result)
+    }
+    callSonosFunction(roomName, "GetVolume", nil, getCallback)
 }
 
 

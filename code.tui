@@ -255,6 +255,43 @@ get = function(url, clientData)
             status = "ok"
         }
     }
+    else if(urlSplit[0] == "sonosControl")
+    {
+        roomName = clientData.roomName
+        control = clientData.control
+        if(control == "pause")
+        {
+            sonos.pause(roomName)
+        }
+        else if(control == "volumeUp")
+        {
+            print("got volumeUp")
+            sonos.addToVolume(roomName, 10)
+            #sonos.pause(roomName)
+        }
+        else if(control == "volumeDown")
+        {
+            print("got volumeDown")
+            sonos.addToVolume(roomName, -10)
+            #sonos.pause(roomName)
+        }
+
+        
+        return {
+            status = "ok"
+        }
+    }
+    else if(urlSplit[0] == "pauseSonos")
+    {
+        roomName = clientData.roomName
+
+        sonos.pause(roomName)
+        
+        return {
+            status = "ok"
+        }
+    }
+    
     else if(table.count(urlSplit) <= 1) #respond to get fileHost/
     {
        return host.get(url, clientData)

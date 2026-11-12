@@ -410,6 +410,34 @@ mainView = {
                     }
                 }
 
+                {
+                    id = "volumeControls" #for sonos
+                    type = "view"
+                    hidden = true
+                    subviews = {
+                        {
+                            id = "volumeDownButton"
+                            type = "button"
+                            buttonType = "imageHueShift"
+                            path = "images/remove.png"
+                            pos = vec3(10, -10, 0)
+                            size = vec2(40,40)
+                            alignmentY = "top"
+                            alignmentX = "left"
+                        }
+                        {
+                            id = "volumeUpButton"
+                            type = "button"
+                            buttonType = "imageHueShift"
+                            path = "images/add.png"
+                            pos = vec3(55, -10, 0)
+                            size = vec2(40,40)
+                            alignmentY = "top"
+                            alignmentX = "left"
+                        }
+                    }
+                }
+
                 
                 
                 {
